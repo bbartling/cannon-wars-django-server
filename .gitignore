@@ -16,6 +16,43 @@
 *.gch
 *.pch
 
+# --- WASM stuff ---
+emsdk/
+
+# --- Python Flask stuff ---
+env/
+venv/
+__pycache__/
+*.pyc
+instance/
+*.db
+*.log
+.env
+
+# --- OS/system junk ---
+.DS_Store
+Thumbs.db
+
+# Python environment (if you have a virtualenv or venv)
+env/
+venv/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+
+# Common OS files
+.DS_Store
+Thumbs.db
+
+# Flask development files
+instance/
+*.db
+
+# Misc
+*.log
+
+
 # Libraries
 *.lib
 *.a

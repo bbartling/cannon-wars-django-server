@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fly Swatter WASM</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+      background: black;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<audio id="swatSound" src="smack.mp3" preload="auto"></audio>
+<audio id="flySound" src="fly.mp3" preload="auto" loop></audio>
+<audio id="winSound" src="game-level-complete.mp3" preload="auto"></audio>
+
+<script>
+
+
+
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
+
+var Module = {
+  onRuntimeInitialized: function() {
+    const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
+    const startingTime = 20; // starting seconds at level 1
+    const swatSound = document.getElementById('swatSound');
+    const flySound = document.getElementById('flySound');
+    const winSound = document.getElementById('winSound');
+
+    let canvasW, canvasH;
+    let mouseX = 0;
+    let mouseY = 0;
+    let mouseClicked = false;
+    let flySoundStarted = false;
+    let flies = [];
+    let level = 1;
+    gameTime = Math.max(5, startingTime - (level - 1));
+    let gameOver = false;
+
+    function createFly() {
+      return {
+        x: Math.random() * canvasW,
+        y: Math.random() * canvasH,
+        vx: (Math.random() * 2 - 1) * 5,
+        vy: (Math.random() * 2 - 1) * 5,
+        alive: true
+      };
+    }
+
+    function init() {
+      canvas.width = document.body.clientWidth;
+      canvas.height = document.body.clientHeight;
+
+      canvasW = canvas.width;
+      canvasH = canvas.height;
+
+      ctx = canvas.getContext('2d');
+
+      setScreenSize(canvasW, canvasH);
+
+      flies.push(createFly());
+
+      window.addEventListener('resize', function() {
+        canvas.width = document.body.clientWidth;
+        canvas.height = document.body.clientHeight;
+        canvasW = canvas.width;
+        canvasH = canvas.height;
+        setScreenSize(canvasW, canvasH);
+      });
+
+      canvas.addEventListener('mousedown', function(event) {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+        mouseClicked = true;
+
+        console.log("Mouse click detected");
+
+        if (!flySoundStarted) {
+          console.log("Starting buzzing sound...");
+          flySound.currentTime = 0;
+          flySound.play().then(() => {
+            console.log("✅ Fly buzzing sound started!");
+          }).catch(err => {
+            console.error("❌ Fly buzzing sound failed to start:", err);
+          });
+          flySoundStarted = true;
+        }
+
+        console.log("Playing swat sound...");
+        swatSound.currentTime = 0;
+        swatSound.play();
+      });
+
+      setInterval(function() {
+        if (!gameOver) {
+          gameTime -= 1;
+          if (gameTime <= 0) {
+            console.log("⌛ Time's up! Game over triggered.");
+
+            gameOver = true;
+
+            console.log("Pausing fly sound, win sound, swat sound...");
+            flySound.pause();
+            flySound.currentTime = 0;  // Reset buzzing to beginning
+
+            winSound.pause();
+            swatSound.pause();
+          }
+        }
+      }, 1000);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+
+    function updateFlies() {
+      flies.forEach(fly => {
+        if (fly.alive) {
+          fly.x += fly.vx;
+          fly.y += fly.vy;
+
+          if (fly.x <= 0 || fly.x >= canvasW) fly.vx = -fly.vx;
+          if (fly.y <= 0 || fly.y >= canvasH) fly.vy = -fly.vy;
+        }
+      });
+    }
+
+    function checkCollision(flyX, flyY, swatX, swatY, swatRadius) {
+      let dx = flyX - swatX;
+      let dy = flyY - swatY;
+      let distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < swatRadius + 10) { // fly radius ~10
+        return true;
+      }
+      return false;
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvasW, canvasH);
+
+      if (!gameOver) {
+        updateFlies();
+      }
+
+      // Draw flies
+      flies.forEach(fly => {
+        if (fly.alive) {
+          ctx.beginPath();
+          ctx.arc(fly.x, fly.y, 10, 0, Math.PI * 2);
+          ctx.fillStyle = 'red';
+          ctx.fill();
+          ctx.closePath();
+        }
+      });
+
+      // Handle swatting
+      if (mouseClicked) {
+        ctx.beginPath();
+        ctx.arc(mouseX, mouseY, 30, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+        ctx.fill();
+        ctx.closePath();
+
+        flies.forEach(fly => {
+          if (fly.alive && checkCollision(fly.x, fly.y, mouseX, mouseY, 30)) {
+            fly.alive = false;
+          }
+        });
+
+        // Check if all flies are dead -> next level
+        if (flies.every(fly => !fly.alive)) {
+          winSound.currentTime = 0;
+          winSound.play();
+
+          level += 1;
+          gameTime = Math.max(5, startingTime - (level - 1));
+          flies = [];
+          for (let i = 0; i < level; i++) {
+            flies.push(createFly());
+          }
+        }
+
+        mouseClicked = false;
+      }
+
+      // Draw timer
+      ctx.fillStyle = 'white';
+      ctx.font = '24px Arial';
+      ctx.fillText('Time Left: ' + gameTime, 20, 40);
+      ctx.fillText('Level: ' + level, 20, 70);
+
+      // Draw game over
+      if (gameOver) {
+        ctx.fillStyle = 'yellow';
+        ctx.font = '48px Arial';
+        ctx.fillText('Game Over!', canvasW/2 - 100, canvasH/2);
+      } else {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    init();
+  }
+};
+
+</script>
+
+<script src="fly_swatter.js"></script>
+
+</body>
+</html>

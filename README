@@ -17,9 +17,9 @@ cd emsdk
 source ./emsdk_env.sh
 ```
 
-2. Compile wasm
+2. (Optional) Add `source /path/to/emsdk/emsdk_env.sh` to your `~/.bashrc` for auto-loading emcc.
 
-```bash
+```
 cd fly_swatter
 
 emcc main.c -o fly_swatter.js \
