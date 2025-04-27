@@ -1,14 +1,21 @@
-from flask import Flask, send_from_directory
+from flask import Flask, render_template
 
-app = Flask(__name__, static_folder="fly_swatter")
+app = Flask(__name__)
 
+# Home page
 @app.route('/')
-def serve_index():
-    return send_from_directory('fly_swatter', 'fly_swatter.html')
+def home():
+    return render_template('home.html')
 
-@app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('fly_swatter', path)
+# Fly Swatter game page
+@app.route('/fly_swatter_game')
+def fly_swatter():
+    return render_template('fly_swatter_game.html')
+
+# Fly Swatter Tutorial page (new!)
+@app.route('/fly_swatter_tutorial')
+def fly_swatter_tutorial():
+    return render_template('fly_swatter_tutorial.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

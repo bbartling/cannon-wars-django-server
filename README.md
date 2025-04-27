@@ -7,8 +7,7 @@ This is a learning playground for making browser-playable games using C, WebAsse
 
 ## 📥 Setup
 
-1. Clone Emscripten SDK:
-
+Clone Emscripten SDK:
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
@@ -17,11 +16,15 @@ cd emsdk
 source ./emsdk_env.sh
 ```
 
-2. Compile wasm
-
+Set make for path for emsdk
 ```bash
-cd fly_swatter
+cd emsdk
+./emsdk activate latest
+source ./emsdk_env.sh
+```
 
+Compile wasm change back into fly swatter dir
+```bash
 emcc main.c -o fly_swatter.js \
   -sEXPORTED_FUNCTIONS=_set_screen_size \
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap \

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fly Swatter Tutorial</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    ul {
+      display: inline-block;
+      text-align: left;
+      margin-top: 10px;
+    }
+    code {
+      background-color: #000000;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 90%;
+    }
+    pre {
+      text-align: left;
+      display: inline-block;
+      background-color: #222;
+      color: #ddd;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      max-width: 90%;
+      margin-top: 20px;
+    }
+    a {
+      color: #4CAF50;
+      text-decoration: none;
+      margin: 0 10px;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🪰 Fly Swatter Tutorial</h1>
+
+  <p>This tutorial explains how the <strong>Fly Swatter</strong> game works:</p>
+
+  <h2>1. C Code (Compiled to WebAssembly)</h2>
+  <ul>
+    <li>Stores an array of flies (<code>Fly[]</code> structs)</li>
+    <li>Handles fly movement and bouncing off screen edges</li>
+    <li>Detects collision with your swat (mouse click)</li>
+  </ul>
+
+  <h2>2. JavaScript Code</h2>
+  <ul>
+    <li>Draws flies onto an HTML5 Canvas</li>
+    <li>Calls the C (WASM) functions using <code>cwrap</code></li>
+    <li>Manages sounds, timers, and game progression</li>
+  </ul>
+
+  <h2>🧠 Why WebAssembly?</h2>
+  <ul>
+    <li>C code runs super fast in the browser 🚀</li>
+    <li>Handles math and physics at near-native speed</li>
+    <li>Perfect for games, simulations, or heavy number crunching</li>
+  </ul>
+
+  <br>
+
+  <h2>💻 Core JavaScript Game Code</h2>
+  <pre><code>function startFlySwatterGame() {
+  const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
+  const createFly = Module.cwrap('create_fly', 'void', []);
+  const updateFlies = Module.cwrap('update_flies', 'void', []);
+  const getNumFlies = Module.cwrap('get_num_flies', 'number', []);
+  const getFlyX = Module.cwrap('get_fly_x', 'number', ['number']);
+  const getFlyY = Module.cwrap('get_fly_y', 'number', ['number']);
+  const isFlyAlive = Module.cwrap('is_fly_alive', 'number', ['number']);
+  const attemptSwat = Module.cwrap('attempt_swat', 'void', ['number', 'number']);
+
+  // ... rest of the JS game loop and logic ...
+}</code></pre>
+
+  <h2>🧩 Core C Code Compiled to WASM</h2>
+  <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdbool.h&gt;
+#include &lt;emscripten.h&gt;
+
+typedef struct {
+  float x, y, vx, vy;
+  bool alive;
+} Fly;
+
+Fly flies[MAX_FLIES];
+
+EMSCRIPTEN_KEEPALIVE
+void create_fly() {
+  // initialize fly with random position and velocity
+}
+
+EMSCRIPTEN_KEEPALIVE
+void update_flies() {
+  // move flies and bounce off walls
+}
+
+EMSCRIPTEN_KEEPALIVE
+void attempt_swat(float mx, float my) {
+  // detect if fly was swatted
+}</code></pre>
+
+  <br>
+
+  <a href="/fly_swatter_game">▶️ Play Fly Swatter</a> |
+  <a href="/">🏠 Home</a>
+
+</body>
+</html>
