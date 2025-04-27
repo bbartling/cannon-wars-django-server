@@ -3,124 +3,339 @@
 <head>
   <meta charset="UTF-8">
   <title>Fly Swatter Tutorial</title>
-  <style>
-    body {
-      text-align: center;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    h1, h2 {
-      color: #333;
-    }
-    ul {
-      display: inline-block;
-      text-align: left;
-      margin-top: 10px;
-    }
-    code {
-      background-color: #000000;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 90%;
-    }
-    pre {
-      text-align: left;
-      display: inline-block;
-      background-color: #222;
-      color: #ddd;
-      padding: 15px;
-      border-radius: 8px;
-      overflow-x: auto;
-      max-width: 90%;
-      margin-top: 20px;
-    }
-    a {
-      color: #4CAF50;
-      text-decoration: none;
-      margin: 0 10px;
-      font-weight: bold;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Start at top */
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+  }
+  .content {
+    max-width: 800px; /* control readable width */
+    width: 100%;
+    text-align: center; /* center headings, links */
+  }
+  h1, h2 {
+    color: #333;
+    margin-top: 20px;
+  }
+  p {
+    text-align: center; /* paragraphs centered inside block */
+    line-height: 1.6;
+    font-size: 18px;
+    margin-top: 20px;
+  }
+  ul {
+    display: inline-block;
+    text-align: left;
+    margin-top: 10px;
+  }
+  code {
+    background-color: #000;
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 90%;
+    font-family: Consolas, monospace;
+  }
+  pre {
+    text-align: left;
+    background-color: #111;
+    color: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-top: 20px;
+    font-size: 14px;
+    font-family: Consolas, monospace;
+    max-width: 100%;
+  }
+  a {
+    color: #4CAF50;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+
+
 </head>
 <body>
+  <div class="content">
 
   <h1>🪰 Fly Swatter Tutorial</h1>
 
-  <p>This tutorial explains how the <strong>Fly Swatter</strong> game works:</p>
+  <br>
 
-  <h2>1. C Code (Compiled to WebAssembly)</h2>
-  <ul>
-    <li>Stores an array of flies (<code>Fly[]</code> structs)</li>
-    <li>Handles fly movement and bouncing off screen edges</li>
-    <li>Detects collision with your swat (mouse click)</li>
-  </ul>
 
-  <h2>2. JavaScript Code</h2>
-  <ul>
-    <li>Draws flies onto an HTML5 Canvas</li>
-    <li>Calls the C (WASM) functions using <code>cwrap</code></li>
-    <li>Manages sounds, timers, and game progression</li>
-  </ul>
+    <div>
+      <a href="/fly_swatter_game">▶️ Play Fly Swatter</a> |
+      <a href="/">🏠 Home</a> |
+      <a href="https://github.com/bbartling/wasm-fun" target="_blank" rel="noopener noreferrer">🐛 Report a Bug</a>
+    </div>
 
-  <h2>🧠 Why WebAssembly?</h2>
-  <ul>
-    <li>C code runs super fast in the browser 🚀</li>
-    <li>Handles math and physics at near-native speed</li>
-    <li>Perfect for games, simulations, or heavy number crunching</li>
-  </ul>
-
+  <p> The <strong>Fly Swatter</strong> game uses C code to keep track of all the flies, move them around, and check if you swat them. JavaScript is like the artist that draws the flies on the screen, plays the sounds, and runs the game timer. WebAssembly is the secret tool that makes the C code run really fast inside the browser. By combining C and JavaScript, the game feels smooth, fun, and quick to play right on your computer or tablet. </p>
   <br>
 
   <h2>💻 Core JavaScript Game Code</h2>
-  <pre><code>function startFlySwatterGame() {
-  const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
-  const createFly = Module.cwrap('create_fly', 'void', []);
-  const updateFlies = Module.cwrap('update_flies', 'void', []);
-  const getNumFlies = Module.cwrap('get_num_flies', 'number', []);
-  const getFlyX = Module.cwrap('get_fly_x', 'number', ['number']);
-  const getFlyY = Module.cwrap('get_fly_y', 'number', ['number']);
-  const isFlyAlive = Module.cwrap('is_fly_alive', 'number', ['number']);
-  const attemptSwat = Module.cwrap('attempt_swat', 'void', ['number', 'number']);
+  <p> The Fly Swatter game starts by setting up a big screen where flies will move around. JavaScript runs in the browser and tells the computer how big the screen is, draws all the flies, and listens for when you click to try and swat them. It also plays buzzing and swat sounds, keeps track of time, and checks if all the flies are gone so you can go to the next level. The game keeps updating everything really fast so it looks smooth and fun while you play! </p>
 
-  // ... rest of the JS game loop and logic ...
-}</code></pre>
+  <pre><code>
+
+    function startFlySwatterGame() {
+      const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
+      const createFly = Module.cwrap('create_fly', 'void', []);
+      const updateFlies = Module.cwrap('update_flies', 'void', []);
+      const getNumFlies = Module.cwrap('get_num_flies', 'number', []);
+      const getFlyX = Module.cwrap('get_fly_x', 'number', ['number']);
+      const getFlyY = Module.cwrap('get_fly_y', 'number', ['number']);
+      const isFlyAlive = Module.cwrap('is_fly_alive', 'number', ['number']);
+      const attemptSwat = Module.cwrap('attempt_swat', 'void', ['number', 'number']);
+
+      const startingTime = 20;
+      const swatSound = document.getElementById('swatSound');
+      const flySound = document.getElementById('flySound');
+      const winSound = document.getElementById('winSound');
+
+      let canvas = document.getElementById('gameCanvas');
+      let ctx = canvas.getContext('2d');
+
+      let canvasW, canvasH;
+      let mouseX = 0;
+      let mouseY = 0;
+      let mouseClicked = false;
+      let flySoundStarted = false;
+      let level = 1;
+      let gameTime = Math.max(5, startingTime - (level - 1));
+      let gameOver = false;
+
+      function init() {
+        canvas.width = document.body.clientWidth;
+        canvas.height = document.body.clientHeight;
+        canvasW = canvas.width;
+        canvasH = canvas.height;
+        setScreenSize(canvasW, canvasH);
+
+        createFly(); // Create 1 fly
+
+        window.addEventListener('resize', () => {
+          canvas.width = document.body.clientWidth;
+          canvas.height = document.body.clientHeight;
+          canvasW = canvas.width;
+          canvasH = canvas.height;
+          setScreenSize(canvasW, canvasH);
+        });
+
+        canvas.addEventListener('mousedown', (event) => {
+          mouseX = event.clientX;
+          mouseY = event.clientY;
+          mouseClicked = true;
+
+          if (!flySoundStarted) {
+            flySound.currentTime = 0;
+            flySound.play().then(() => {
+              console.log("y buzzing sound started!");
+            }).catch(err => {
+              console.error("y buzzing sound failed:", err);
+            });
+            flySoundStarted = true;
+          }
+
+          swatSound.currentTime = 0;
+          swatSound.play();
+        });
+
+        setInterval(() => {
+          if (!gameOver) {
+            gameTime -= 1;
+            if (gameTime <= 0) {
+              gameOver = true;
+              flySound.pause();
+              flySound.currentTime = 0;
+              winSound.pause();
+              swatSound.pause();
+            }
+          }
+        }, 1000);
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      function gameLoop() {
+        ctx.clearRect(0, 0, canvasW, canvasH);
+
+        if (!gameOver) {
+          updateFlies();
+        }
+
+        let numFlies = getNumFlies();
+        for (let i = 0; i < numFlies; i++) {
+          if (isFlyAlive(i)) {
+            let x = getFlyX(i);
+            let y = getFlyY(i);
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+            ctx.closePath();
+          }
+        }
+
+        if (mouseClicked) {
+          ctx.beginPath();
+          ctx.arc(mouseX, mouseY, 30, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+          ctx.fill();
+          ctx.closePath();
+
+          attemptSwat(mouseX, mouseY);
+
+          let allDead = true;
+          for (let i = 0; i < numFlies; i++) {
+            if (isFlyAlive(i)) {
+              allDead = false;
+              break;
+            }
+          }
+
+          if (allDead) {
+            winSound.currentTime = 0;
+            winSound.play();
+            level += 1;
+            gameTime = Math.max(5, startingTime - (level - 1));
+            for (let i = 0; i < level; i++) {
+              createFly();
+            }
+          }
+
+          mouseClicked = false;
+        }
+
+        ctx.fillStyle = 'white';
+        ctx.font = '24px Arial';
+        ctx.fillText('Time Left: ' + gameTime, 20, 40);
+        ctx.fillText('Level: ' + level, 20, 70);
+
+        if (gameOver) {
+          ctx.fillStyle = 'yellow';
+          ctx.font = '48px Arial';
+          ctx.fillText('Game Over!', canvasW/2 - 100, canvasH/2);
+        } else {
+          requestAnimationFrame(gameLoop);
+        }
+      }
+
+      init();
+    }
+
+
+</code></pre>
 
   <h2>🧩 Core C Code Compiled to WASM</h2>
-  <pre><code>#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
-#include &lt;stdbool.h&gt;
-#include &lt;emscripten.h&gt;
+  <p> The Fly Swatter game uses a special kind of code called C that gets turned into WebAssembly which is served by the web app hosting this site and used by the JavaScript. WebAssembly sometimes called WASM which is like machine language for web browsers and its super fast! Much faster than JavaScript! The C code aka the WebAssembly handles all the game mechanics such as it remembers where every fly is, moves them around quickly, and checks if you swatted one when you click. It also makes sure the flies bounce off the walls so they don't escape the screen. This hidden C/WASM does all the heavy lifting for the math and calculations to make it easier for the JavaScript to run all of the visualizations, sensing, sounds, and game timing </p>
+  <pre><code>
 
-typedef struct {
-  float x, y, vx, vy;
-  bool alive;
-} Fly;
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <emscripten.h>
+    #include <stdbool.h>
 
-Fly flies[MAX_FLIES];
+    #define MAX_FLIES 100
 
-EMSCRIPTEN_KEEPALIVE
-void create_fly() {
-  // initialize fly with random position and velocity
-}
+    typedef struct {
+        float x;
+        float y;
+        float vx;
+        float vy;
+        bool alive;
+    } Fly;
 
-EMSCRIPTEN_KEEPALIVE
-void update_flies() {
-  // move flies and bounce off walls
-}
+    Fly flies[MAX_FLIES];
+    int num_flies = 0;
+    int screen_width = 800;
+    int screen_height = 600;
 
-EMSCRIPTEN_KEEPALIVE
-void attempt_swat(float mx, float my) {
-  // detect if fly was swatted
-}</code></pre>
+    EMSCRIPTEN_KEEPALIVE
+    void set_screen_size(int w, int h) {
+        screen_width = w;
+        screen_height = h;
+        printf("Screen size set: %d x %d\n", screen_width, screen_height);
+    }
 
-  <br>
 
-  <a href="/fly_swatter_game">▶️ Play Fly Swatter</a> |
-  <a href="/">🏠 Home</a>
+    EMSCRIPTEN_KEEPALIVE
+    void create_fly() {
+        if (num_flies < MAX_FLIES) {
+            flies[num_flies].x = rand() % 800;
+            flies[num_flies].y = rand() % 600;
+            flies[num_flies].vx = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
+            flies[num_flies].vy = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
+            flies[num_flies].alive = true;
+            num_flies++;
+        }
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void update_flies() {
+        for (int i = 0; i < num_flies; i++) {
+            if (flies[i].alive) {
+                flies[i].x += flies[i].vx;
+                flies[i].y += flies[i].vy;
+
+                if (flies[i].x <= 0 || flies[i].x >= screen_width) flies[i].vx = -flies[i].vx;
+                if (flies[i].y <= 0 || flies[i].y >= screen_height) flies[i].vy = -flies[i].vy;
+
+            }
+        }
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    float get_fly_x(int index) {
+        if (index < num_flies) return flies[index].x;
+        return -1;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    float get_fly_y(int index) {
+        if (index < num_flies) return flies[index].y;
+        return -1;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    int is_fly_alive(int index) {
+        if (index < num_flies) return flies[index].alive ? 1 : 0;
+        return 0;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    int get_num_flies() {
+        return num_flies;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void attempt_swat(float mx, float my) {
+        for (int i = 0; i < num_flies; i++) {
+            if (flies[i].alive) {
+                float dx = flies[i].x - mx;
+                float dy = flies[i].y - my;
+                if ((dx*dx + dy*dy) < (30.0f * 30.0f)) { // 30 = swat radius
+                    flies[i].alive = false;
+                }
+            }
+        }
+    }
+
+</code></pre>
+
+ </div>
 
 </body>
 </html>

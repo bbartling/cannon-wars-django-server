@@ -3,6 +3,8 @@
 A hobby project to create simple games with WebAssembly (C → WASM) and serve them using Flask.  
 This is a learning playground for making browser-playable games using C, WebAssembly, and minimal JavaScript.
 
+* https://bensapi.pythonanywhere.com/
+
 ---
 
 ## 📥 Setup
@@ -23,7 +25,7 @@ cd emsdk
 source ./emsdk_env.sh
 ```
 
-Compile wasm change back into fly swatter dir
+Compile wasm change back into the `fly_swatter_driver_code` directory
 ```bash
 emcc main.c -o fly_swatter.js \
   -sEXPORTED_FUNCTIONS=_set_screen_size \
