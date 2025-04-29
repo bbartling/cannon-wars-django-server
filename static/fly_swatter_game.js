@@ -12,7 +12,7 @@ function startFlySwatterGame() {
     const swatSound = document.getElementById('swatSound');
     const flySound = document.getElementById('flySound');
     const winSound = document.getElementById('winSound');
-  
+
     let canvas = document.getElementById('gameCanvas');
     let ctx = canvas.getContext('2d');
   
@@ -24,6 +24,28 @@ function startFlySwatterGame() {
     let level = 1;
     let gameTime = Math.max(5, startingTime - (level - 1));
     let gameOver = false;
+
+    function drawFly(x, y) {
+      const frameWidth = 256;
+      const frameHeight = 241;
+      const totalFrames = 5;
+      const scale = 0.2;
+      const animationSpeed = 100;
+    
+      const currentFrame = Math.floor(Date.now() / animationSpeed) % totalFrames;
+    
+      ctx.drawImage(
+        flySprite,
+        currentFrame * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+        x - (frameWidth * scale) / 2,
+        y - (frameHeight * scale) / 2,
+        frameWidth * scale,
+        frameHeight * scale
+      );
+    }    
   
     function init() {
       canvas.width = document.body.clientWidth;
@@ -49,11 +71,7 @@ function startFlySwatterGame() {
   
         if (!flySoundStarted) {
           flySound.currentTime = 0;
-          flySound.play().then(() => {
-            console.log("✅ Fly buzzing sound started!");
-          }).catch(err => {
-            console.error("❌ Fly buzzing sound failed:", err);
-          });
+          flySound.play();
           flySoundStarted = true;
         }
   
@@ -85,17 +103,17 @@ function startFlySwatterGame() {
       }
   
       let numFlies = getNumFlies();
+      console.log(` Drawing flies for level ${level} - total alive: ${numFlies}`);
+      
       for (let i = 0; i < numFlies; i++) {
-        if (isFlyAlive(i)) {
+        let alive = isFlyAlive(i);
+        if (alive) {
           let x = getFlyX(i);
           let y = getFlyY(i);
-          ctx.beginPath();
-          ctx.arc(x, y, 10, 0, Math.PI * 2);
-          ctx.fillStyle = 'red';
-          ctx.fill();
-          ctx.closePath();
+          drawFly(x, y);
         }
       }
+        
   
       if (mouseClicked) {
         ctx.beginPath();
@@ -142,5 +160,7 @@ function startFlySwatterGame() {
     }
   
     init();
+    window.startFlySwatterGame = startFlySwatterGame;
+    
   }
   

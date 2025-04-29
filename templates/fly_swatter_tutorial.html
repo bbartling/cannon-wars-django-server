@@ -82,11 +82,123 @@
       <a href="https://github.com/bbartling/wasm-fun" target="_blank" rel="noopener noreferrer">🐛 Report a Bug</a>
     </div>
 
-  <p> The <strong>Fly Swatter</strong> game uses C code to keep track of all the flies, move them around, and check if you swat them. JavaScript is like the artist that draws the flies on the screen, plays the sounds, and runs the game timer. WebAssembly is the secret tool that makes the C code run really fast inside the browser. By combining C and JavaScript, the game feels smooth, fun, and quick to play right on your computer or tablet. </p>
+    <p>
+      The making of the Fly Swatter game begins with C code, where we design all the game's core mechanics and rules, like how a fly moves around a 2D map, its velocity, and its position. As the game progresses, multiple flies are added to each level to make the game harder, and C efficiently handles all the math and movement dynamics. Since C code cannot run directly in a web browser, a tool called <strong>Emscripten</strong> is used to convert it into <strong>WebAssembly</strong> (WASM), which is like super-fast machine code for browsers. WebAssembly allows complex things, like game physics and behaviors, to run much faster than JavaScript alone. In this project, JavaScript works alongside WebAssembly by handling the visual drawings on the canvas, the sounds, the mouse clicks, and controlling when levels end or restart. Even though this Fly Swatter game is simple enough that it could run without WebAssembly, using it now lays a strong foundation for building even bigger and more complex games in the future!
+    </p>
+
   <br>
 
-  <h2>💻 Core JavaScript Game Code</h2>
-  <p> The Fly Swatter game starts by setting up a big screen where flies will move around. JavaScript runs in the browser and tells the computer how big the screen is, draws all the flies, and listens for when you click to try and swat them. It also plays buzzing and swat sounds, keeps track of time, and checks if all the flies are gone so you can go to the next level. The game keeps updating everything really fast so it looks smooth and fun while you play! </p>
+
+
+  <h2>🧩 Core C Code Compiled to WASM</h2>
+    <p>
+      The C code below forms the heart of the Fly Swatter game by defining important constants like <code>MAX_FLIES</code> and using a data structure called a <code>struct</code> to describe each fly. Each fly has X and Y position coordinates and velocity in both directions, making it behave like a little bouncing ball inside the game window. The C program includes functions to create new flies, update their positions as they move, retrieve their coordinates, and attempt a swat by checking if a mouse click is close enough to a fly. When a fly is successfully swatted, it is marked as no longer alive by setting its <code>alive</code> status to <code>false</code>. Later, the JavaScript section will show how all these C functions become accessible inside the browser through WebAssembly, allowing JavaScript to quickly read fly positions, detect collisions, and drive the game's visuals, sound, and timing. Together, the C code and WebAssembly make the Fly Swatter game smooth, efficient, and fun!
+    </p>
+
+
+  <pre><code>
+
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <emscripten.h>
+    #include <stdbool.h>
+
+    #define MAX_FLIES 100
+
+    typedef struct {
+        float x;
+        float y;
+        float vx;
+        float vy;
+        bool alive;
+    } Fly;
+
+    Fly flies[MAX_FLIES];
+    int num_flies = 0;
+    int screen_width = 800;
+    int screen_height = 600;
+
+    EMSCRIPTEN_KEEPALIVE
+    void set_screen_size(int w, int h) {
+        screen_width = w;
+        screen_height = h;
+        printf("Screen size set: %d x %d\n", screen_width, screen_height);
+    }
+
+
+    EMSCRIPTEN_KEEPALIVE
+    void create_fly() {
+        if (num_flies < MAX_FLIES) {
+            flies[num_flies].x = rand() % 800;
+            flies[num_flies].y = rand() % 600;
+            flies[num_flies].vx = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
+            flies[num_flies].vy = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
+            flies[num_flies].alive = true;
+            num_flies++;
+        }
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void update_flies() {
+        for (int i = 0; i < num_flies; i++) {
+            if (flies[i].alive) {
+                flies[i].x += flies[i].vx;
+                flies[i].y += flies[i].vy;
+
+                if (flies[i].x <= 0 || flies[i].x >= screen_width) flies[i].vx = -flies[i].vx;
+                if (flies[i].y <= 0 || flies[i].y >= screen_height) flies[i].vy = -flies[i].vy;
+
+            }
+        }
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    float get_fly_x(int index) {
+        if (index < num_flies) return flies[index].x;
+        return -1;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    float get_fly_y(int index) {
+        if (index < num_flies) return flies[index].y;
+        return -1;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    int is_fly_alive(int index) {
+        if (index < num_flies) return flies[index].alive ? 1 : 0;
+        return 0;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    int get_num_flies() {
+        return num_flies;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void attempt_swat(float mx, float my) {
+        for (int i = 0; i < num_flies; i++) {
+            if (flies[i].alive) {
+                float dx = flies[i].x - mx;
+                float dy = flies[i].y - my;
+                if ((dx*dx + dy*dy) < (30.0f * 30.0f)) { // 30 = swat radius
+                    flies[i].alive = false;
+                }
+            }
+        }
+    }
+
+</code></pre>
+
+<h2>💻 Core JavaScript Game Code</h2>
+<p>
+  The JavaScript code, which was developed after the C code, is the part of the Fly Swatter game that allows players to interact with everything on the screen. In general, we want all of the heavy mathematics and background calculations to run in C and WebAssembly because it is much faster than JavaScript. You might notice that all the C functions are accessed through <code>Module.cwrap</code>, which comes from Emscripten, a tool that helps turn C code into WebAssembly so it can run in the browser. The rest of the game is just plain, simple JavaScript. JavaScript defines variables for the C functions, manages the game timer (starting at 20 seconds and subtracting 1 second for each level you pass), and adds one more fly each level to make the game harder. It also tracks your mouse clicks, passing the X and Y coordinates to the C side when you attempt a swat. JavaScript sets up the game canvas, handles sound effects like buzzing, swatting, and level completion, and controls the main game loop. While JavaScript handles the drawing and interaction, C and WebAssembly are busy doing all the heavy lifting with the math and fly movements behind the scenes. This project is a simple example where JavaScript could have handled it alone, but setting it up this way prepares us for bigger, more complex games where combining JavaScript and WebAssembly will really shine!
+</p>
+
+<p>
+  If you also notice, JavaScript is not a compiled language like C. In C, you must statically assign variables, meaning you have to tell the program exactly what kind of data you are storing ahead of time. C code must be compiled into WebAssembly before it can run in the browser. JavaScript, however, is a scripting language that behaves more like Python, where you don't need to declare the type of a variable beforehand. JavaScript code runs directly in the browser and is interpreted at runtime, meaning it is compiled "just in time" as the page loads. This is why JavaScript is very flexible for building user interfaces, while C is better for doing fast math, movement, and background game logic. The entire Fly Swatter game is then served by a small web app written in Python using Flask, which sends the HTML file, the sound files, the JavaScript files, and the WebAssembly (.wasm) file to your browser, where everything comes together to make the game run locally just for you!
+</p>
+
 
   <pre><code>
 
@@ -238,104 +350,7 @@
 
 
 </code></pre>
-
-  <h2>🧩 Core C Code Compiled to WASM</h2>
-  <p> The Fly Swatter game uses a special kind of code called C that gets turned into WebAssembly which is served by the web app hosting this site and used by the JavaScript. WebAssembly sometimes called WASM which is like machine language for web browsers and its super fast! Much faster than JavaScript! The C code aka the WebAssembly handles all the game mechanics such as it remembers where every fly is, moves them around quickly, and checks if you swatted one when you click. It also makes sure the flies bounce off the walls so they don't escape the screen. This hidden C/WASM does all the heavy lifting for the math and calculations to make it easier for the JavaScript to run all of the visualizations, sensing, sounds, and game timing </p>
-  <pre><code>
-
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <emscripten.h>
-    #include <stdbool.h>
-
-    #define MAX_FLIES 100
-
-    typedef struct {
-        float x;
-        float y;
-        float vx;
-        float vy;
-        bool alive;
-    } Fly;
-
-    Fly flies[MAX_FLIES];
-    int num_flies = 0;
-    int screen_width = 800;
-    int screen_height = 600;
-
-    EMSCRIPTEN_KEEPALIVE
-    void set_screen_size(int w, int h) {
-        screen_width = w;
-        screen_height = h;
-        printf("Screen size set: %d x %d\n", screen_width, screen_height);
-    }
-
-
-    EMSCRIPTEN_KEEPALIVE
-    void create_fly() {
-        if (num_flies < MAX_FLIES) {
-            flies[num_flies].x = rand() % 800;
-            flies[num_flies].y = rand() % 600;
-            flies[num_flies].vx = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
-            flies[num_flies].vy = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
-            flies[num_flies].alive = true;
-            num_flies++;
-        }
-    }
-
-    EMSCRIPTEN_KEEPALIVE
-    void update_flies() {
-        for (int i = 0; i < num_flies; i++) {
-            if (flies[i].alive) {
-                flies[i].x += flies[i].vx;
-                flies[i].y += flies[i].vy;
-
-                if (flies[i].x <= 0 || flies[i].x >= screen_width) flies[i].vx = -flies[i].vx;
-                if (flies[i].y <= 0 || flies[i].y >= screen_height) flies[i].vy = -flies[i].vy;
-
-            }
-        }
-    }
-
-    EMSCRIPTEN_KEEPALIVE
-    float get_fly_x(int index) {
-        if (index < num_flies) return flies[index].x;
-        return -1;
-    }
-
-    EMSCRIPTEN_KEEPALIVE
-    float get_fly_y(int index) {
-        if (index < num_flies) return flies[index].y;
-        return -1;
-    }
-
-    EMSCRIPTEN_KEEPALIVE
-    int is_fly_alive(int index) {
-        if (index < num_flies) return flies[index].alive ? 1 : 0;
-        return 0;
-    }
-
-    EMSCRIPTEN_KEEPALIVE
-    int get_num_flies() {
-        return num_flies;
-    }
-
-    EMSCRIPTEN_KEEPALIVE
-    void attempt_swat(float mx, float my) {
-        for (int i = 0; i < num_flies; i++) {
-            if (flies[i].alive) {
-                float dx = flies[i].x - mx;
-                float dy = flies[i].y - my;
-                if ((dx*dx + dy*dy) < (30.0f * 30.0f)) { // 30 = swat radius
-                    flies[i].alive = false;
-                }
-            }
-        }
-    }
-
-</code></pre>
-
- </div>
+</div>
 
 </body>
 </html>
