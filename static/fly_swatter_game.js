@@ -24,36 +24,39 @@ function startFlySwatterGame() {
     let level = 1;
     let gameTime = Math.max(5, startingTime - (level - 1));
     let gameOver = false;
+    let frameCount = 0;
 
     function drawFly(x, y) {
-      const frameWidth = 256;
-      const frameHeight = 241;
-      const totalFrames = 5;
-      const scale = 0.2;
-      const animationSpeed = 100;
+      if (!window.flyFrames || window.flyFrames.length < 2) {
+        console.warn("Fly sprites not ready");
+        return;
+      }
     
-      const currentFrame = Math.floor(Date.now() / animationSpeed) % totalFrames;
+      const frameIndex = Math.floor(Date.now() / 150) % window.flyFrames.length;
+      const img = window.flyFrames[frameIndex];
+      const size = 40;
+    
+      ctx.shadowColor = 'white';
     
       ctx.drawImage(
-        flySprite,
-        currentFrame * frameWidth,
-        0,
-        frameWidth,
-        frameHeight,
-        x - (frameWidth * scale) / 2,
-        y - (frameHeight * scale) / 2,
-        frameWidth * scale,
-        frameHeight * scale
+        img,
+        x - size / 2,
+        y - size / 2,
+        size,
+        size
       );
+    
     }    
-  
+    
+    
     function init() {
       canvas.width = document.body.clientWidth;
       canvas.height = document.body.clientHeight;
       canvasW = canvas.width;
       canvasH = canvas.height;
       setScreenSize(canvasW, canvasH);
-  
+      
+      console.log("createFly() called in init");
       createFly(); // Create 1 fly
   
       window.addEventListener('resize', () => {
@@ -103,7 +106,10 @@ function startFlySwatterGame() {
       }
   
       let numFlies = getNumFlies();
-      console.log(` Drawing flies for level ${level} - total alive: ${numFlies}`);
+
+      if (frameCount++ % 60 === 0) {
+        console.log(`🌀 Level ${level}, alive flies: ${numFlies}`);
+      }
       
       for (let i = 0; i < numFlies; i++) {
         let alive = isFlyAlive(i);

@@ -27,8 +27,13 @@
 <!-- 1. Module block first -->
 <script>
 
-const flySprite = new Image();
-flySprite.src = "{{ url_for('static', filename='fly_sprite.png') }}";
+const flySprite1 = new Image();
+flySprite1.src = "{{ url_for('static', filename='fly_sprite_0.png') }}";
+
+const flySprite2 = new Image();
+flySprite2.src = "{{ url_for('static', filename='fly_sprite_1.png') }}";
+
+window.flyFrames = [flySprite1, flySprite2];
 
 var Module = {
   onRuntimeInitialized: function() {
