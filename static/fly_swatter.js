@@ -1224,7 +1224,6 @@ Module['FS_createPreloadedFile'] = FS.createPreloadedFile;
   'zeroMemory',
   'exitJS',
   'getHeapMax',
-  'abortOnCannotGrowMemory',
   'growMemory',
   'strError',
   'inetPton4',
@@ -1527,6 +1526,7 @@ var _get_fly_x = Module['_get_fly_x'] = createExportWrapper('get_fly_x', 1);
 var _get_fly_y = Module['_get_fly_y'] = createExportWrapper('get_fly_y', 1);
 var _is_fly_alive = Module['_is_fly_alive'] = createExportWrapper('is_fly_alive', 1);
 var _get_num_flies = Module['_get_num_flies'] = createExportWrapper('get_num_flies', 0);
+var _get_fly_angle = Module['_get_fly_angle'] = createExportWrapper('get_fly_angle', 1);
 var _attempt_swat = Module['_attempt_swat'] = createExportWrapper('attempt_swat', 2);
 var _fflush = createExportWrapper('fflush', 1);
 var _strerror = createExportWrapper('strerror', 1);

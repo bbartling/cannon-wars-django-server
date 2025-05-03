@@ -26,27 +26,24 @@
 
 <!-- 1. Module block first -->
 <script>
-
-const flySprite1 = new Image();
-flySprite1.src = "{{ url_for('static', filename='fly_sprite_0.png') }}";
-
-const flySprite2 = new Image();
-flySprite2.src = "{{ url_for('static', filename='fly_sprite_1.png') }}";
-
-window.flyFrames = [flySprite1, flySprite2];
-
-var Module = {
-  onRuntimeInitialized: function() {
-    startFlySwatterGame();
-  }
-};
-</script>
-
-<!-- 2. Then Emscripten-compiled WebAssembly (fly_swatter.js) -->
-<script src="{{ url_for('static', filename='fly_swatter.js') }}"></script>
-
-<!-- 3. Then your custom game logic (fly_swatter_game.js) -->
-<script src="{{ url_for('static', filename='fly_swatter_game.js') }}"></script>
+  const flySprite1 = new Image();
+  flySprite1.src = "{{ url_for('static', filename='fly_sprite_0.png') }}";
+  
+  const flySprite2 = new Image();
+  flySprite2.src = "{{ url_for('static', filename='fly_sprite_1.png') }}";
+  
+  window.flyFrames = [flySprite1, flySprite2];
+  
+  var Module = {
+    onRuntimeInitialized: function() {
+      console.log("✅ WASM initialized with global Module");
+      startFlySwatterGame();
+    }
+  };
+  </script>
+  
+  <script src="{{ url_for('static', filename='fly_swatter.js') }}"></script>
+  <script src="{{ url_for('static', filename='fly_swatter_game.js') }}"></script>  
 
 </body>
 </html>

@@ -7,6 +7,7 @@ function startFlySwatterGame() {
     const getFlyY = Module.cwrap('get_fly_y', 'number', ['number']);
     const isFlyAlive = Module.cwrap('is_fly_alive', 'number', ['number']);
     const attemptSwat = Module.cwrap('attempt_swat', 'void', ['number', 'number']);
+    const getFlyAngle = Module.cwrap('get_fly_angle', 'number', ['number']);
   
     const startingTime = 20;
     const swatSound = document.getElementById('swatSound');
@@ -26,7 +27,7 @@ function startFlySwatterGame() {
     let gameOver = false;
     let frameCount = 0;
 
-    function drawFly(x, y) {
+    function drawFly(x, y, angle) {
       if (!window.flyFrames || window.flyFrames.length < 2) {
         console.warn("Fly sprites not ready");
         return;
@@ -35,18 +36,16 @@ function startFlySwatterGame() {
       const frameIndex = Math.floor(Date.now() / 150) % window.flyFrames.length;
       const img = window.flyFrames[frameIndex];
       const size = 40;
+      const correction = 70 * Math.PI / 180;
     
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle + correction);
       ctx.shadowColor = 'white';
+      ctx.drawImage(img, -size / 2, -size / 2, size, size); 
+      ctx.restore();
+    }
     
-      ctx.drawImage(
-        img,
-        x - size / 2,
-        y - size / 2,
-        size,
-        size
-      );
-    
-    }    
     
     
     function init() {
@@ -116,7 +115,8 @@ function startFlySwatterGame() {
         if (alive) {
           let x = getFlyX(i);
           let y = getFlyY(i);
-          drawFly(x, y);
+          let angle = getFlyAngle(i);
+          drawFly(x, y, angle);
         }
       }
         

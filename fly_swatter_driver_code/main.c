@@ -2,14 +2,16 @@
 #include <stdlib.h>
 #include <emscripten.h>
 #include <stdbool.h>
+#include <math.h>
 
-#define MAX_FLIES 100
+#define MAX_FLIES 25
 
 typedef struct {
     float x;
     float y;
     float vx;
     float vy;
+    float angle; 
     bool alive; 
 } Fly;
 
@@ -42,13 +44,19 @@ EMSCRIPTEN_KEEPALIVE
 void update_flies() {
     for (int i = 0; i < num_flies; i++) {
         if (flies[i].alive) {
-            flies[i].x += flies[i].vx;
-            flies[i].y += flies[i].vy;
-
+            float new_x = flies[i].x + flies[i].vx;
+            float new_y = flies[i].y + flies[i].vy;
+        
+            // Compute angle using atan2(dy, dx)
+            flies[i].angle = atan2f(flies[i].vy, flies[i].vx);
+        
+            flies[i].x = new_x;
+            flies[i].y = new_y;
+        
             if (flies[i].x <= 0 || flies[i].x >= screen_width) flies[i].vx = -flies[i].vx;
             if (flies[i].y <= 0 || flies[i].y >= screen_height) flies[i].vy = -flies[i].vy;
-            
         }
+            
     }
 }
 
@@ -73,6 +81,12 @@ int is_fly_alive(int index) {
 EMSCRIPTEN_KEEPALIVE
 int get_num_flies() {
     return num_flies;
+}
+
+EMSCRIPTEN_KEEPALIVE
+float get_fly_angle(int index) {
+    if (index < num_flies) return flies[index].angle;
+    return 0.0f;
 }
 
 EMSCRIPTEN_KEEPALIVE
