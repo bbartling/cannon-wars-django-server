@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .content {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  h1, h2 {
+    color: #333;
+    margin-top: 20px;
+  }
+  
+  p {
+    text-align: center;
+    line-height: 1.6;
+    font-size: 18px;
+    margin-top: 20px;
+  }
+  
+  ul {
+    display: inline-block;
+    text-align: left;
+    margin-top: 10px;
+  }
+  
+  code {
+    background-color: #000;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 90%;
+    font-family: Consolas, monospace;
+  }
+  
+  pre {
+    text-align: left;
+    background-color: #111;
+    color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-top: 20px;
+    font-size: 14px;
+    font-family: Consolas, monospace;
+    max-width: 100%;
+  }
+  
+  a {
+    color: #4CAF50;
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: bold;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+  
+  .game-button {
+    display: inline-block;
+    margin: 10px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    border-radius: 5px;
+  }
+  
+  .game-button.disabled {
+    background-color: #999;
+    cursor: not-allowed;
+  }
+  
+  .flash-button {
+    animation: flash-text 1s infinite alternate;
+    color: #4CAF50;
+    font-weight: bold;
+  }
+  
+  @keyframes flash-text {
+    from { color: #4CAF50; }
+    to { color: #f5f5f5; }
+  }
+  
+  
