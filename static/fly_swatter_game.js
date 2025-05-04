@@ -1,14 +1,15 @@
 function startFlySwatterGame() {
     const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
     const createFly = Module.cwrap('create_fly', 'void', []);
-    const updateFlies = Module.cwrap('update_flies', 'void', []);
     const getNumFlies = Module.cwrap('get_num_flies', 'number', []);
     const getFlyX = Module.cwrap('get_fly_x', 'number', ['number']);
     const getFlyY = Module.cwrap('get_fly_y', 'number', ['number']);
     const isFlyAlive = Module.cwrap('is_fly_alive', 'number', ['number']);
     const attemptSwat = Module.cwrap('attempt_swat', 'void', ['number', 'number']);
     const getFlyAngle = Module.cwrap('get_fly_angle', 'number', ['number']);
-  
+    const updateFlies = Module.cwrap('update_flies', 'void', ['number', 'number']);
+    const isFlyFlying = Module.cwrap('is_fly_flying', 'number', ['number']);
+    
     const startingTime = 20;
     const swatSound = document.getElementById('swatSound');
     const flySound = document.getElementById('flySound');
@@ -27,13 +28,14 @@ function startFlySwatterGame() {
     let gameOver = false;
     let frameCount = 0;
 
-    function drawFly(x, y, angle) {
+    function drawFly(x, y, angle, isFlying) {
       if (!window.flyFrames || window.flyFrames.length < 2) {
         console.warn("Fly sprites not ready");
         return;
       }
     
-      const frameIndex = Math.floor(Date.now() / 150) % window.flyFrames.length;
+      //const frameIndex = Math.floor(Date.now() / 150) % window.flyFrames.length;
+      const frameIndex = isFlying ? Math.floor(Date.now() / 150) % window.flyFrames.length : 0;
       const img = window.flyFrames[frameIndex];
       const size = 40;
       const correction = 70 * Math.PI / 180;
@@ -97,39 +99,60 @@ function startFlySwatterGame() {
       requestAnimationFrame(gameLoop);
     }
   
+    let now = performance.now();
+    let lastTime = now;
+    
     function gameLoop() {
+      let currentTime = performance.now();
+      let delta = (currentTime - lastTime) / 1000; // in seconds
+      lastTime = currentTime;
+    
       ctx.clearRect(0, 0, canvasW, canvasH);
-  
+    
       if (!gameOver) {
-        updateFlies();
+        updateFlies(delta, gameTime);
       }
-  
+    
       let numFlies = getNumFlies();
-
-      if (frameCount++ % 60 === 0) {
-        console.log(`🌀 Level ${level}, alive flies: ${numFlies}`);
-      }
-      
+      let anyFlyFlying = false;
+    
       for (let i = 0; i < numFlies; i++) {
-        let alive = isFlyAlive(i);
-        if (alive) {
+        if (isFlyAlive(i)) {
           let x = getFlyX(i);
           let y = getFlyY(i);
           let angle = getFlyAngle(i);
-          drawFly(x, y, angle);
+          const flying = isFlyFlying(i);
+    
+          if (flying) {
+            anyFlyFlying = true;
+          }
+    
+          drawFly(x, y, angle, flying);
         }
       }
-        
-  
+    
+      // Fly buzzing sound control
+      if (anyFlyFlying && !flySoundStarted) {
+        flySound.play();
+        flySoundStarted = true;
+      } else if (!anyFlyFlying && flySoundStarted) {
+        flySound.pause();
+        flySoundStarted = false;
+      }
+    
+      if (frameCount++ % 60 === 0) {
+        console.log(`🌀 Level ${level}, alive flies: ${numFlies}`);
+      }
+    
       if (mouseClicked) {
         ctx.beginPath();
         ctx.arc(mouseX, mouseY, 30, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
         ctx.fill();
         ctx.closePath();
-  
+    
         attemptSwat(mouseX, mouseY);
-  
+    
         let allDead = true;
         for (let i = 0; i < numFlies; i++) {
           if (isFlyAlive(i)) {
@@ -137,7 +160,7 @@ function startFlySwatterGame() {
             break;
           }
         }
-  
+    
         if (allDead) {
           winSound.currentTime = 0;
           winSound.play();
@@ -147,23 +170,23 @@ function startFlySwatterGame() {
             createFly();
           }
         }
-  
+    
         mouseClicked = false;
       }
-  
+    
       ctx.fillStyle = 'white';
       ctx.font = '24px Arial';
       ctx.fillText('Time Left: ' + gameTime, 20, 40);
       ctx.fillText('Level: ' + level, 20, 70);
-  
+    
       if (gameOver) {
         ctx.fillStyle = 'yellow';
         ctx.font = '48px Arial';
-        ctx.fillText('Game Over!', canvasW/2 - 100, canvasH/2);
+        ctx.fillText('Game Over!', canvasW / 2 - 100, canvasH / 2);
       } else {
         requestAnimationFrame(gameLoop);
       }
-    }
+    }    
   
     init();
     window.startFlySwatterGame = startFlySwatterGame;

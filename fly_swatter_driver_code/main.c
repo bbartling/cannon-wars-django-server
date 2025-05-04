@@ -3,17 +3,26 @@
 #include <emscripten.h>
 #include <stdbool.h>
 #include <math.h>
+#include <time.h>
 
-#define MAX_FLIES 25
+#define MAX_FLIES 100
+
+typedef enum {
+    STATE_FLYING,
+    STATE_LANDED
+} FlyState;
 
 typedef struct {
     float x;
     float y;
     float vx;
     float vy;
-    float angle; 
-    bool alive; 
+    float angle;
+    bool alive;
+    FlyState state;
+    float state_timer; // time remaining in current state
 } Fly;
+
 
 Fly flies[MAX_FLIES];
 int num_flies = 0;
@@ -31,34 +40,48 @@ void set_screen_size(int w, int h) {
 EMSCRIPTEN_KEEPALIVE
 void create_fly() {
     if (num_flies < MAX_FLIES) {
-        flies[num_flies].x = rand() % 800;
-        flies[num_flies].y = rand() % 600;
-        flies[num_flies].vx = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
-        flies[num_flies].vy = (rand() % 1000 / 500.0f - 1.0f) * 5.0f;
+        flies[num_flies].x = rand() % screen_width;
+        flies[num_flies].y = rand() % screen_height;
+        flies[num_flies].vx = ((rand() % 1000) / 500.0f - 1.0f) * 5.0f;
+        flies[num_flies].vy = ((rand() % 1000) / 500.0f - 1.0f) * 5.0f;
+        flies[num_flies].angle = 0;
         flies[num_flies].alive = true;
+        flies[num_flies].state = STATE_FLYING;
+        flies[num_flies].state_timer = 2.0f + ((rand() % 4000) / 1000.0f); // 2–6 sec
         num_flies++;
     }
 }
 
 EMSCRIPTEN_KEEPALIVE
-void update_flies() {
+void update_flies(float delta_time, float game_time_remaining) {
+    float max_pause = fminf(6.0f, game_time_remaining);
+
     for (int i = 0; i < num_flies; i++) {
-        if (flies[i].alive) {
-            float new_x = flies[i].x + flies[i].vx;
-            float new_y = flies[i].y + flies[i].vy;
-        
-            // Compute angle using atan2(dy, dx)
+        if (!flies[i].alive) continue;
+
+        flies[i].state_timer -= delta_time;
+
+        if (flies[i].state_timer <= 0) {
+            if (flies[i].state == STATE_FLYING) {
+                flies[i].state = STATE_LANDED;
+                flies[i].state_timer = 2.0f + ((rand() % 4000) / 1000.0f) * (max_pause / 6.0f);
+            } else {
+                flies[i].state = STATE_FLYING;
+                flies[i].state_timer = 2.0f + ((rand() % 4000) / 1000.0f);
+            }
+        }
+
+        if (flies[i].state == STATE_FLYING) {
+            flies[i].x += flies[i].vx;
+            flies[i].y += flies[i].vy;
             flies[i].angle = atan2f(flies[i].vy, flies[i].vx);
-        
-            flies[i].x = new_x;
-            flies[i].y = new_y;
-        
+
             if (flies[i].x <= 0 || flies[i].x >= screen_width) flies[i].vx = -flies[i].vx;
             if (flies[i].y <= 0 || flies[i].y >= screen_height) flies[i].vy = -flies[i].vy;
         }
-            
     }
 }
+
 
 EMSCRIPTEN_KEEPALIVE
 float get_fly_x(int index) {
@@ -100,4 +123,10 @@ void attempt_swat(float mx, float my) {
             }
         }
     }
+}
+
+EMSCRIPTEN_KEEPALIVE
+int is_fly_flying(int index) {
+    if (index < num_flies) return flies[index].state == STATE_FLYING ? 1 : 0;
+    return 0;
 }
