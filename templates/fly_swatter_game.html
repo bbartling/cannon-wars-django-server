@@ -3,7 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <title>Fly Swatter WASM</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+      background: black;
+    }
+  </style>
 </head>
 <body>
 
