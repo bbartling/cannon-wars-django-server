@@ -6,10 +6,9 @@ This is a learning playground for making browser-playable games using C, WebAsse
 * https://bensapi.pythonanywhere.com/
 
 ---
+## Clone Emscripten SDK
+* In Ubuntu flavored WSL
 
-## 📥 Setup in WSL to compile C into .wasm
-
-Clone Emscripten SDK:
 ```bash
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
@@ -17,6 +16,10 @@ cd emsdk
 ./emsdk activate latest
 source ./emsdk_env.sh
 ```
+---
+
+## Fly Swatter make Web Assembly Notes
+* In root dir in WSL
 
 Set make for path for emsdk. Compile the fly swatter game and put `.wasm` and glue code right into the Flask apps `static` directory to be served with web app for game play.
 ```bash
@@ -28,7 +31,22 @@ emcc fly_swatter_driver_code/main.c -o static/fly_swatter.js \
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap \
   -sNO_EXIT_RUNTIME=1 \
   -sALLOW_MEMORY_GROWTH=1
-
-
 ```
 
+## Pop the lock make Web Assembly Notes
+* In root dir in WSL
+
+```bash
+cd /mnt/c/Users/ben/Documents/wasm-fun/
+
+# Step 1: Load emsdk environment
+source emsdk/emsdk_env.sh
+
+# Step 2: Compile Pop the Lock C to WASM + JS
+emcc pop_the_lock_driver_code/main.c -O3 -o static/pop_the_lock.js \
+  -s EXPORTED_FUNCTIONS='["_set_screen_size", "_tap_event", "_get_bar_angle", "_get_target_angle", "_is_game_over", "_reset_game"]' \
+  -s EXPORTED_RUNTIME_METHODS='["cwrap"]' \
+  -s NO_EXIT_RUNTIME=1 \
+  -s ALLOW_MEMORY_GROWTH=1 \
+  -s WASM=1
+```
