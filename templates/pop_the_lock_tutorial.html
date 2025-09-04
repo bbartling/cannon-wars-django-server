@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pop the Lock Tutorial</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="content">
+    <h1>🔐 Pop the Lock Tutorial</h1>
+    <br>
+    <div>
+      <a href="/pop_the_lock_game" class="flash-button">▶️ Play Pop the Lock</a> |
+      <a href="/" title="Home">🏠 Home</a> |
+      <a href="https://github.com/bbartling/wasm-fun" target="_blank" rel="noopener noreferrer">🐛 Report a Bug</a>
+    </div>
+
+    <p>
+      Pop the Lock brings the simple reflex‑testing mechanic of the mobile classic into your browser.  At its heart is a C routine that tracks a rotating bar on a dial and a target on its circumference.  Every time you tap the screen, the WebAssembly code computes the angular difference between the bar and the target.  If you land within a small tolerance, the score increases and the bar reverses direction while the target jumps to the exact opposite side of the dial.  This back‑and‑forth dance continues until you successfully hit the target fifteen times in a row — at which point you win.  A miss immediately ends the game.  While this logic could easily be implemented in JavaScript alone, compiling it to WebAssembly with <strong>Emscripten</strong> keeps the time‑critical maths inside C and lays a foundation for more complex games.
+    </p>
+
+    <h2>🧠 Game Logic in C and WebAssembly</h2>
+    <p>
+      The C driver defines a simple state machine for the dial.  A global angle is advanced based on elapsed time and multiplied by a <code>direction</code> value of +1 or −1.  On reset the direction is set to 1 and a random <code>target_angle</code> is chosen.  On a tap, the function <code>tap_event()</code> computes the absolute angular difference modulo 2π.  If the hit is within a small <code>HIT_TOLERANCE</code>, the <code>score</code> increments, the rotation direction flips, the target angle is rotated by π to the opposite side of the circle and the speed increases slightly.  Once the player reaches a defined <code>MAX_HITS</code> (15 in this example) a <code>game_won</code> flag is set.  A miss sets <code>game_over</code>.  For reference, here is an earlier version of the C program compiled to WebAssembly:
+    </p>
+
+    <pre><code>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdbool.h&gt;
+#include &lt;math.h&gt;
+#include &lt;time.h&gt;
+#include &lt;emscripten.h&gt;
+
+int screen_width = 800;
+int screen_height = 600;
+
+float angle = 0.0f;
+float speed = 2.0f; // radians per second
+float target_angle = 0.0f;
+
+int score = 0;
+bool game_over = false;
+float delta_time = 0.016f; // ~60 FPS
+
+#define HIT_TOLERANCE 0.15f
+
+// For timing inside WASM
+double last_update_time = 0.0;
+
+EMSCRIPTEN_KEEPALIVE
+void set_screen_size(int w, int h) {
+    screen_width = w;
+    screen_height = h;
+}
+
+float rand_angle() {
+    return ((float)rand() / RAND_MAX) * 2.0f * M_PI;
+}
+
+void new_target() {
+    target_angle = rand_angle();
+}
+
+EMSCRIPTEN_KEEPALIVE
+void reset_game() {
+    angle = 0.0f;
+    speed = 2.0f;
+    score = 0;
+    game_over = false;
+    new_target();
+    last_update_time = emscripten_get_now();
+}
+
+EMSCRIPTEN_KEEPALIVE
+void tap_event() {
+    if (game_over) return;
+
+    float diff = fabsf(angle - target_angle);
+    if (diff > M_PI) diff = 2 * M_PI - diff;
+
+    if (diff &lt; HIT_TOLERANCE) {
+        score++;
+        speed += 0.1f;
+        new_target();
+    } else {
+        game_over = true;
+    }
+}
+
+EMSCRIPTEN_KEEPALIVE
+float get_bar_angle() {
+    if (!game_over) {
+        double now = emscripten_get_now();
+        float dt = (float)((now - last_update_time) / 1000.0);
+        last_update_time = now;
+
+        angle += speed * dt;
+        if (angle &gt; 2 * M_PI) angle -= 2 * M_PI;
+    }
+    return angle;
+}
+
+EMSCRIPTEN_KEEPALIVE
+float get_target_angle() {
+    return target_angle;
+}
+
+EMSCRIPTEN_KEEPALIVE
+int is_game_over() {
+    return game_over ? 1 : 0;
+}
+    </code></pre>
+
+    <h2>🎨 Drawing and Interaction in JavaScript</h2>
+    <p>
+      JavaScript sets up a full‑screen canvas and binds to the exported C functions using <code>Module.cwrap</code>.  On each animation frame it reads the current bar and target angles from WebAssembly, draws them as coloured dots on the dial, and displays the score.  When the user clicks, the code asks the module for the current score, invokes <code>tap_event()</code> and then reads the score again to determine whether the hit was successful.  It never computes angles itself; all game logic — direction switching, target shifting and win detection — lives in C.  The JavaScript simply queries <code>is_game_over()</code> and <code>is_game_won()</code> to know when to show the appropriate overlay and offer a restart.
+    </p>
+
+    <pre><code>
+function startPopTheLockGame() {
+  const setScreenSize   = Module.cwrap('set_screen_size', 'void', ['number','number']);
+  const tapEvent        = Module.cwrap('tap_event', 'void', []);
+  const getBarAngle     = Module.cwrap('get_bar_angle', 'number', []);
+  const getTargetAngle  = Module.cwrap('get_target_angle','number', []);
+  const isGameOverWasm  = Module.cwrap('is_game_over','number', []);
+  const resetGame       = Module.cwrap('reset_game','void', []);
+  // Load audio elements numbered popSound1…popSound15
+  const audioClips = [];
+  for (let i=1; i<=15; i++) {
+    const el = document.getElementById('popSound'+i);
+    if (el) audioClips.push(el);
+  }
+  const canvas = document.getElementById('gameCanvas');
+  const ctx    = canvas.getContext('2d');
+  // Resize canvas and inform WASM
+  function resizeCanvas() {
+    canvas.width  = document.body.clientWidth;
+    canvas.height = document.body.clientHeight;
+    setScreenSize(canvas.width, canvas.height);
+    updateGeometry();
+  }
+  window.addEventListener('resize', resizeCanvas);
+  let centerX, centerY, radius;
+  function updateGeometry() {
+    centerX = canvas.width/2;
+    centerY = canvas.height/2;
+    radius  = Math.min(canvas.width, canvas.height) * 0.35;
+  }
+  // JS state
+  let score = 0;
+  let gameOver = false;
+  let audioIndex = 0;
+  function angularDifference(a,b) {
+    let diff = Math.abs(a - b);
+    if (diff > Math.PI) diff = 2*Math.PI - diff;
+    return diff;
+  }
+  canvas.addEventListener('click', () => {
+    if (gameOver) {
+      resetGame();
+      score = 0;
+      audioIndex = 0;
+      gameOver = false;
+      return;
+    }
+    const barAngle    = getBarAngle();
+    const targetAngle = getTargetAngle();
+    if (angularDifference(barAngle, targetAngle) < 0.15) {
+      score++;
+      const clip = audioClips[Math.min(audioIndex, audioClips.length - 1)];
+      if (clip) { clip.currentTime = 0; clip.play(); }
+      audioIndex++;
+    }
+    tapEvent();
+    if (isGameOverWasm() === 1) { gameOver = true; }
+  });
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // outer dial
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2*Math.PI);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth   = radius * 0.05;
+    ctx.stroke();
+    const barAngle    = getBarAngle();
+    const targetAngle = getTargetAngle();
+    // target
+    const tx = centerX + radius*Math.cos(targetAngle);
+    const ty = centerY + radius*Math.sin(targetAngle);
+    ctx.beginPath();
+    ctx.arc(tx, ty, radius*0.06, 0, 2*Math.PI);
+    ctx.fillStyle = '#FFD700';
+    ctx.fill();
+    // bar
+    const bx = centerX + radius*Math.cos(barAngle);
+    const by = centerY + radius*Math.sin(barAngle);
+    ctx.beginPath();
+    ctx.arc(bx, by, radius*0.04, 0, 2*Math.PI);
+    ctx.fillStyle = '#FF5555';
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = `${Math.floor(radius*0.25)}px Arial`;
+    ctx.fillText('Score: '+score, 20, 20);
+    if (gameOver) {
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#FFD700';
+      ctx.textAlign = 'center';
+      ctx.font = `${Math.floor(radius*0.5)}px Arial`;
+      ctx.fillText('Game Over!', centerX, centerY - radius*0.2);
+      ctx.font = `${Math.floor(radius*0.3)}px Arial`;
+      ctx.fillText('Final Score: '+score, centerX, centerY + radius*0.1);
+      ctx.font = `${Math.floor(radius*0.18)}px Arial`;
+      ctx.fillText('Click to restart', centerX, centerY + radius*0.4);
+      ctx.textAlign = 'left';
+      return;
+    }
+    requestAnimationFrame(draw);
+  }
+  function init() {
+    resizeCanvas();
+    resetGame();
+    requestAnimationFrame(draw);
+  }
+  init();
+}
+    </code></pre>
+
+    <p>
+      Combining the C logic for precision timing with JavaScript for drawing and input yields a responsive little game with just a handful of source files.  Feel free to extend it with your own graphics, tweak the tolerance or speed curve, or even add a high‑score table backed by Python on the Flask server.  Most importantly, have fun exploring the intersection of C, WebAssembly and the modern web!
+    </p>
+  </div>
+</body>
+</html>

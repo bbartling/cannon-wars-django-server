@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pop the Lock WASM</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: black;
+      color: white;
+    }
+    canvas {
+      display: block;
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- Preload pop sounds with increasing pitches.  There are 15 audio clips -->
+{% for i in range(1, 16) %}
+<!-- Concatenate the loop index with the filename using Jinja's ~ operator.  Numbers are converted to strings automatically. -->
+<audio id="popSound{{ i }}" src="{{ url_for('static', filename=i ~ '_pop_the_lock.mp3') }}" preload="auto"></audio>
+{% endfor %}
+
+<!-- The Module onRuntimeInitialized callback triggers the game start.  -->
+<script>
+  var Module = {
+    onRuntimeInitialized: function() {
+      console.log("✅ Pop the Lock WASM module ready");
+      startPopTheLockGame();
+    }
+  };
+</script>
+
+<!-- Load the compiled WebAssembly glue code first -->
+<script src="{{ url_for('static', filename='pop_the_lock.js') }}"></script>
+<!-- Load our custom JavaScript that interacts with the WASM module -->
+<script src="{{ url_for('static', filename='pop_the_lock_game.js') }}"></script>
+
+</body>
+</html>

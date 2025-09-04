@@ -49,4 +49,18 @@ emcc pop_the_lock_driver_code/main.c -O3 -o static/pop_the_lock.js \
   -s NO_EXIT_RUNTIME=1 \
   -s ALLOW_MEMORY_GROWTH=1 \
   -s WASM=1
+
+# If you extend the pop_the_lock driver with additional exported functions (e.g. <code>get_score</code> and <code>is_game_won</code>),
+# be sure to include them in the <code>EXPORTED_FUNCTIONS</code> list.  For example:
+
+emcc pop_the_lock_driver_code/main.c -O3 -o static/pop_the_lock.js \
+  -s EXPORTED_FUNCTIONS='["_set_screen_size","_tap_event","_get_bar_angle","_get_target_angle","_is_game_over","_reset_game","_get_score","_is_game_won"]' \
+  -s EXPORTED_RUNTIME_METHODS='["cwrap"]' \
+  -s NO_EXIT_RUNTIME=1 \
+  -s ALLOW_MEMORY_GROWTH=1 \
+  -s WASM=1
+
 ```
+
+## sound trimmer notes
+mp3cut.net
