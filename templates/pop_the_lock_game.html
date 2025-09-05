@@ -26,6 +26,7 @@
 {% for i in range(1, 16) %}
 <!-- Concatenate the loop index with the filename using Jinja's ~ operator.  Numbers are converted to strings automatically. -->
 <audio id="popSound{{ i }}" src="{{ url_for('static', filename=i ~ '_pop_the_lock.mp3') }}" preload="auto"></audio>
+<audio id="winSound" src="{{ url_for('static', filename='game-level-complete.mp3') }}" preload="auto"></audio>
 {% endfor %}
 
 <!-- The Module onRuntimeInitialized callback triggers the game start.  -->

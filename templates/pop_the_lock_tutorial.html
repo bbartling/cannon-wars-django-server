@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Pop the Lock Tutorial</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
@@ -16,219 +16,190 @@
     </div>
 
     <p>
-      Pop the Lock brings the simple reflex‑testing mechanic of the mobile classic into your browser.  At its heart is a C routine that tracks a rotating bar on a dial and a target on its circumference.  Every time you tap the screen, the WebAssembly code computes the angular difference between the bar and the target.  If you land within a small tolerance, the score increases and the bar reverses direction while the target jumps to the exact opposite side of the dial.  This back‑and‑forth dance continues until you successfully hit the target fifteen times in a row — at which point you win.  A miss immediately ends the game.  While this logic could easily be implemented in JavaScript alone, compiling it to WebAssembly with <strong>Emscripten</strong> keeps the time‑critical maths inside C and lays a foundation for more complex games.
+      Pop the Lock brings the simple reflex-testing mechanic of the mobile classic into your browser.
+      At its heart is a C routine (compiled to WebAssembly) that tracks a rotating bar on a dial and a target on its
+      circumference. Every time you tap/click, the module checks the angular difference between the bar and the target.
+      <strong>If you land within a small tolerance, the score increases and the bar reverses direction while the target
+      jumps to a new position. With each successful hit, this jump becomes shorter, creating a progressively tighter and
+      more challenging back-and-forth arc.</strong> A miss immediately ends the game; hit all required targets to win.
+      Keeping the time-critical math in C lays a foundation for consistent timing and harder patterns as difficulty rises.
     </p>
 
     <h2>🧠 Game Logic in C and WebAssembly</h2>
     <p>
-      The C driver defines a simple state machine for the dial.  A global angle is advanced based on elapsed time and multiplied by a <code>direction</code> value of +1 or −1.  On reset the direction is set to 1 and a random <code>target_angle</code> is chosen.  On a tap, the function <code>tap_event()</code> computes the absolute angular difference modulo 2π.  If the hit is within a small <code>HIT_TOLERANCE</code>, the <code>score</code> increments, the rotation direction flips, the target angle is rotated by π to the opposite side of the circle and the speed increases slightly.  Once the player reaches a defined <code>MAX_HITS</code> (15 in this example) a <code>game_won</code> flag is set.  A miss sets <code>game_over</code>.  For reference, here is an earlier version of the C program compiled to WebAssembly:
+      The C driver implements a small state machine and exposes a minimal API to JavaScript (via <code>cwrap</code>).
+      On reset, the bar starts rotating in a default direction and a random target is chosen. When you tap:
+    </p>
+    <ul>
+      <li>If the angular miss is within <code>HIT_TOLERANCE</code>, the <code>score</code> increments, the rotation
+          <em>direction flips</em>, and the target “hops” along a <em>tightening arc</em> that starts at 180° and shrinks
+          with each success. Speed may increase slightly to raise difficulty.</li>
+      <li>When you reach <code>MAX_HITS</code>, <code>game_won</code> is set.</li>
+      <li>Otherwise, a miss sets <code>game_over</code>.</li>
+    </ul>
+
+    <p>
+      Below is a representative C snippet showing the current behavior (direction reversal, tightening arc, and win/lose flags).
+      Your actual code may differ in names or constants, but the structure mirrors the logic used in <code>main.c</code>.
     </p>
 
-    <pre><code>
-#include &lt;stdio.h&gt;
-#include &lt;stdlib.h&gt;
+    <pre><code>#include &lt;math.h&gt;
 #include &lt;stdbool.h&gt;
-#include &lt;math.h&gt;
-#include &lt;time.h&gt;
 #include &lt;emscripten.h&gt;
 
-int screen_width = 800;
-int screen_height = 600;
+static float angle          = 0.0f;     // current bar angle (radians)
+static float speed          = 2.0f;     // radians/sec, increases slightly on hit
+static int   direction      = +1;       // +1 or -1, flips on hit
+static float target_angle   = 0.0f;     // current target angle (radians)
+static float arc_span_rad   = (float)M_PI; // starts at 180° and tightens with hits
+static int   score          = 0;
+static bool  game_over      = false;
+static bool  game_won       = false;
 
-float angle = 0.0f;
-float speed = 2.0f; // radians per second
-float target_angle = 0.0f;
+#define HIT_TOLERANCE   0.15f
+#define MAX_HITS        15
+#define ARC_TIGHTEN     0.85f   // multiply arc after each hit (e.g., 180° → 153° → ...)
+#define ARC_MIN_RAD     0.35f   // clamp so it never becomes too tiny
+#define SPEED_BUMP      0.10f
 
-int score = 0;
-bool game_over = false;
-float delta_time = 0.016f; // ~60 FPS
+static double last_ms = 0.0;
 
-#define HIT_TOLERANCE 0.15f
+// utility: shortest angular difference in [0..pi]
+static float ang_diff(float a, float b) {
+  float d = fabsf(a - b);
+  if (d &gt; (float)M_PI) d = 2.0f*(float)M_PI - d;
+  return d;
+}
 
-// For timing inside WASM
-double last_update_time = 0.0;
+// pick a new target somewhere along the current arc in the current direction
+static void choose_next_target(void) {
+  // base hop center is "opposite" the last target relative to the current direction flip
+  // then restrict to a shrinking arc about that center
+  float center = target_angle + (float)M_PI * (float)direction;
+  // wrap center to [0, 2π)
+  while (center &lt; 0) center += 2.0f*(float)M_PI;
+  while (center &gt;= 2.0f*(float)M_PI) center -= 2.0f*(float)M_PI;
+
+  // random offset within [-arc_span/2, +arc_span/2]
+  // (replace emscripten_random() with your RNG)
+  float r = (float)emscripten_random();  // 0..1
+  float offset = (r - 0.5f) * arc_span_rad;
+
+  target_angle = center + offset;
+  // wrap to [0, 2π)
+  while (target_angle &lt; 0) target_angle += 2.0f*(float)M_PI;
+  while (target_angle &gt;= 2.0f*(float)M_PI) target_angle -= 2.0f*(float)M_PI;
+}
 
 EMSCRIPTEN_KEEPALIVE
-void set_screen_size(int w, int h) {
-    screen_width = w;
-    screen_height = h;
-}
-
-float rand_angle() {
-    return ((float)rand() / RAND_MAX) * 2.0f * M_PI;
-}
-
-void new_target() {
-    target_angle = rand_angle();
-}
-
-EMSCRIPTEN_KEEPALIVE
-void reset_game() {
-    angle = 0.0f;
-    speed = 2.0f;
-    score = 0;
-    game_over = false;
-    new_target();
-    last_update_time = emscripten_get_now();
+void reset_game(void) {
+  angle        = 0.0f;
+  speed        = 2.0f;
+  direction    = +1;
+  arc_span_rad = (float)M_PI;   // start at 180°
+  score        = 0;
+  game_over    = false;
+  game_won     = false;
+  last_ms      = emscripten_get_now();
+  target_angle = 2.0f*(float)M_PI * (float)emscripten_random();
 }
 
 EMSCRIPTEN_KEEPALIVE
-void tap_event() {
-    if (game_over) return;
+void step_frame(void) {
+  if (game_over || game_won) return;
+  double now = emscripten_get_now();
+  float dt = (float)((now - last_ms) / 1000.0);
+  last_ms = now;
 
-    float diff = fabsf(angle - target_angle);
-    if (diff > M_PI) diff = 2 * M_PI - diff;
+  angle += (float)direction * speed * dt;
+  // wrap angle
+  if (angle &lt; 0) angle += 2.0f*(float)M_PI;
+  if (angle &gt;= 2.0f*(float)M_PI) angle -= 2.0f*(float)M_PI;
+}
 
-    if (diff &lt; HIT_TOLERANCE) {
-        score++;
-        speed += 0.1f;
-        new_target();
-    } else {
-        game_over = true;
+EMSCRIPTEN_KEEPALIVE
+void tap_event(void) {
+  if (game_over || game_won) return;
+
+  float miss = ang_diff(angle, target_angle);
+  if (miss &lt;= HIT_TOLERANCE) {
+    // success: score, flip direction, tighten arc, nudge speed, hop target
+    score++;
+    direction = -direction;
+
+    arc_span_rad *= ARC_TIGHTEN;
+    if (arc_span_rad &lt; ARC_MIN_RAD) arc_span_rad = ARC_MIN_RAD;
+
+    speed += SPEED_BUMP;
+
+    if (score &gt;= MAX_HITS) {
+      game_won = true;
+      return;
     }
+    choose_next_target();
+  } else {
+    game_over = true;
+  }
 }
 
-EMSCRIPTEN_KEEPALIVE
-float get_bar_angle() {
-    if (!game_over) {
-        double now = emscripten_get_now();
-        float dt = (float)((now - last_update_time) / 1000.0);
-        last_update_time = now;
+// Minimal getters used by JS:
+EMSCRIPTEN_KEEPALIVE int   getScore(void)      { return score; }
+EMSCRIPTEN_KEEPALIVE int   is_game_over(void)  { return game_over ? 1 : 0; }
+EMSCRIPTEN_KEEPALIVE int   is_game_won(void)   { return game_won ? 1 : 0; }
+EMSCRIPTEN_KEEPALIVE float get_bar_angle(void) { return angle; }
+EMSCRIPTEN_KEEPALIVE float get_target_angle(void) { return target_angle; }
+</code></pre>
 
-        angle += speed * dt;
-        if (angle &gt; 2 * M_PI) angle -= 2 * M_PI;
-    }
-    return angle;
-}
-
-EMSCRIPTEN_KEEPALIVE
-float get_target_angle() {
-    return target_angle;
-}
-
-EMSCRIPTEN_KEEPALIVE
-int is_game_over() {
-    return game_over ? 1 : 0;
-}
-    </code></pre>
-
-    <h2>🎨 Drawing and Interaction in JavaScript</h2>
+    <h2>🎨 Drawing & Input in JavaScript</h2>
     <p>
-      JavaScript sets up a full‑screen canvas and binds to the exported C functions using <code>Module.cwrap</code>.  On each animation frame it reads the current bar and target angles from WebAssembly, draws them as coloured dots on the dial, and displays the score.  When the user clicks, the code asks the module for the current score, invokes <code>tap_event()</code> and then reads the score again to determine whether the hit was successful.  It never computes angles itself; all game logic — direction switching, target shifting and win detection — lives in C.  The JavaScript simply queries <code>is_game_over()</code> and <code>is_game_won()</code> to know when to show the appropriate overlay and offer a restart.
+      JavaScript owns the canvas, input, audio, and UI overlays. <em>It does not re-implement game rules.</em>
+      Instead, it calls the C module for authoritative state:
     </p>
+    <ul>
+      <li><code>step_frame()</code> each animation frame to advance the bar.</li>
+      <li><code>tap_event()</code> on user click/tap.</li>
+      <li>Read state via <code>getScore()</code>, <code>get_bar_angle()</code>, <code>get_target_angle()</code>,
+          <code>is_game_over()</code>, and <code>is_game_won()</code> to render UI and decide when to play
+          “pop” sounds, show overlays, or restart.</li>
+    </ul>
 
-    <pre><code>
-function startPopTheLockGame() {
-  const setScreenSize   = Module.cwrap('set_screen_size', 'void', ['number','number']);
-  const tapEvent        = Module.cwrap('tap_event', 'void', []);
-  const getBarAngle     = Module.cwrap('get_bar_angle', 'number', []);
-  const getTargetAngle  = Module.cwrap('get_target_angle','number', []);
-  const isGameOverWasm  = Module.cwrap('is_game_over','number', []);
-  const resetGame       = Module.cwrap('reset_game','void', []);
-  // Load audio elements numbered popSound1…popSound15
-  const audioClips = [];
-  for (let i=1; i<=15; i++) {
-    const el = document.getElementById('popSound'+i);
-    if (el) audioClips.push(el);
-  }
-  const canvas = document.getElementById('gameCanvas');
-  const ctx    = canvas.getContext('2d');
-  // Resize canvas and inform WASM
-  function resizeCanvas() {
-    canvas.width  = document.body.clientWidth;
-    canvas.height = document.body.clientHeight;
-    setScreenSize(canvas.width, canvas.height);
-    updateGeometry();
-  }
-  window.addEventListener('resize', resizeCanvas);
-  let centerX, centerY, radius;
-  function updateGeometry() {
-    centerX = canvas.width/2;
-    centerY = canvas.height/2;
-    radius  = Math.min(canvas.width, canvas.height) * 0.35;
-  }
-  // JS state
-  let score = 0;
-  let gameOver = false;
-  let audioIndex = 0;
-  function angularDifference(a,b) {
-    let diff = Math.abs(a - b);
-    if (diff > Math.PI) diff = 2*Math.PI - diff;
-    return diff;
-  }
-  canvas.addEventListener('click', () => {
-    if (gameOver) {
-      resetGame();
-      score = 0;
-      audioIndex = 0;
-      gameOver = false;
-      return;
-    }
-    const barAngle    = getBarAngle();
-    const targetAngle = getTargetAngle();
-    if (angularDifference(barAngle, targetAngle) < 0.15) {
-      score++;
-      const clip = audioClips[Math.min(audioIndex, audioClips.length - 1)];
-      if (clip) { clip.currentTime = 0; clip.play(); }
-      audioIndex++;
-    }
-    tapEvent();
-    if (isGameOverWasm() === 1) { gameOver = true; }
-  });
-  function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    // outer dial
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, 2*Math.PI);
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth   = radius * 0.05;
-    ctx.stroke();
-    const barAngle    = getBarAngle();
-    const targetAngle = getTargetAngle();
-    // target
-    const tx = centerX + radius*Math.cos(targetAngle);
-    const ty = centerY + radius*Math.sin(targetAngle);
-    ctx.beginPath();
-    ctx.arc(tx, ty, radius*0.06, 0, 2*Math.PI);
-    ctx.fillStyle = '#FFD700';
-    ctx.fill();
-    // bar
-    const bx = centerX + radius*Math.cos(barAngle);
-    const by = centerY + radius*Math.sin(barAngle);
-    ctx.beginPath();
-    ctx.arc(bx, by, radius*0.04, 0, 2*Math.PI);
-    ctx.fillStyle = '#FF5555';
-    ctx.fill();
-    ctx.fillStyle = 'white';
-    ctx.font = `${Math.floor(radius*0.25)}px Arial`;
-    ctx.fillText('Score: '+score, 20, 20);
-    if (gameOver) {
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = '#FFD700';
-      ctx.textAlign = 'center';
-      ctx.font = `${Math.floor(radius*0.5)}px Arial`;
-      ctx.fillText('Game Over!', centerX, centerY - radius*0.2);
-      ctx.font = `${Math.floor(radius*0.3)}px Arial`;
-      ctx.fillText('Final Score: '+score, centerX, centerY + radius*0.1);
-      ctx.font = `${Math.floor(radius*0.18)}px Arial`;
-      ctx.fillText('Click to restart', centerX, centerY + radius*0.4);
-      ctx.textAlign = 'left';
-      return;
-    }
-    requestAnimationFrame(draw);
-  }
-  function init() {
-    resizeCanvas();
-    resetGame();
-    requestAnimationFrame(draw);
-  }
-  init();
+    <pre><code>// Sketch: binding to the WASM API (real file: pop_the_lock_game.js)
+const stepFrame      = Module.cwrap('step_frame', 'void', []);
+const tapEvent       = Module.cwrap('tap_event', 'void', []);
+const getScore       = Module.cwrap('getScore', 'number', []);
+const getBarAngle    = Module.cwrap('get_bar_angle', 'number', []);
+const getTargetAngle = Module.cwrap('get_target_angle', 'number', []);
+const isGameOver     = Module.cwrap('is_game_over', 'number', []);
+const isGameWon      = Module.cwrap('is_game_won', 'number', []);
+
+function frame() {
+  stepFrame();                 // C advances time/angle internally
+  const a = getBarAngle();     // authoritative bar angle
+  const t = getTargetAngle();  // authoritative target angle
+  // ... draw dial, bar, target, score ...
+  if (isGameOver()) { /* show Game Over */ return; }
+  if (isGameWon())   { /* show You Win  */ return; }
+  requestAnimationFrame(frame);
 }
-    </code></pre>
+
+canvas.addEventListener('click', () => {
+  if (isGameOver() || isGameWon()) { /* reset handler elsewhere */ return; }
+  const before = getScore();
+  tapEvent();
+  const after = getScore();
+  if (after &gt; before) {
+    // play a “pop” sound here; direction flips are handled in C
+  }
+});
+
+requestAnimationFrame(frame);
+</code></pre>
 
     <p>
-      Combining the C logic for precision timing with JavaScript for drawing and input yields a responsive little game with just a handful of source files.  Feel free to extend it with your own graphics, tweak the tolerance or speed curve, or even add a high‑score table backed by Python on the Flask server.  Most importantly, have fun exploring the intersection of C, WebAssembly and the modern web!
+      With this division of labor, rendering and audio stay smooth in JavaScript while the deterministic,
+      difficulty-scaling logic stays in C. To extend the game, try adjusting <code>ARC_TIGHTEN</code>,
+      <code>ARC_MIN_RAD</code>, <code>SPEED_BUMP</code>, or <code>HIT_TOLERANCE</code>, or add visual
+      flair (trail effects, particle bursts) purely on the JS side without touching gameplay rules.
     </p>
   </div>
 </body>

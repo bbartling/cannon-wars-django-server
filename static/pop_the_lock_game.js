@@ -49,6 +49,8 @@ function startPopTheLockGame() {
     }
   }
 
+  const winSound = document.getElementById('winSound');
+
   // Debug: report how many audio clips were loaded
   console.log(`[PopTheLock] Loaded ${audioClips.length} pop sound effects`);
 
@@ -104,34 +106,41 @@ function startPopTheLockGame() {
       audioIndex = 0;
       gameOver = false;
       gameWon = false;
+      requestAnimationFrame(draw); // <-- ADD THIS LINE TO RESTART THE DRAW LOOP
       return;
     }
     if (typeof getScore === 'function') {
       // Use the score-based logic when getScore is available
-      const oldScore = getScore();
-      tapEvent();
-      const newScore = getScore();
-      const delta    = newScore - oldScore;
-      if (delta > 0) {
-        score = newScore;
-        const clipIndex = Math.min(newScore - 1, audioClips.length - 1);
-        const clip = audioClips[clipIndex];
-        if (clip) {
-          console.log(`[PopTheLock] Successful pop! Score=${newScore}, playing sound #${clipIndex + 1}`);
-          clip.currentTime = 0;
-          clip.play();
-        }
-      } else {
-        console.log('[PopTheLock] Missed pop');
-      }
-      // Check end conditions via WebAssembly
+      tapEvent(); // Ask WASM to process the tap first
+      
+      // Now, check the results from WASM
+      score = getScore(); // Update JS score
+
       if (isGameOverWasm() === 1) {
         console.log('[PopTheLock] Game over detected from WASM');
         gameOver = true;
-      }
-      if (typeof isGameWonWasm === 'function' && isGameWonWasm() === 1) {
+      } else if (typeof isGameWonWasm === 'function' && isGameWonWasm() === 1) {
         console.log('[PopTheLock] Game won detected from WASM');
         gameWon = true;
+        if (winSound) {
+          winSound.currentTime = 0;
+          winSound.play();
+        }
+      } else {
+        // If the game is not over and not won, a tap must be either a miss or a success
+        // We can check this by seeing if the audioIndex (our JS score tracker) matches the new score
+        if (audioIndex < score) {
+            audioIndex = score;
+            const clipIndex = Math.min(score - 1, audioClips.length - 1);
+            const clip = audioClips[clipIndex];
+            if (clip) {
+                console.log(`[PopTheLock] Successful pop! Score=${score}, playing sound #${clipIndex + 1}`);
+                clip.currentTime = 0;
+                clip.play();
+            }
+        } else {
+             console.log('[PopTheLock] Missed pop');
+        }
       }
     } else {
       // Fallback logic when getScore is not available.  Compute the
@@ -189,7 +198,7 @@ function startPopTheLockGame() {
     const targetX = centerX + radius * Math.cos(targetAngle);
     const targetY = centerY + radius * Math.sin(targetAngle);
     ctx.beginPath();
-    ctx.arc(targetX, targetY, radius * 0.08, 0, 2 * Math.PI);
+    ctx.arc(targetX, targetY, radius * 0.16, 0, 2 * Math.PI);
     ctx.fillStyle = '#FFD700'; // gold
     ctx.fill();
 

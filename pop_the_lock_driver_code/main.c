@@ -5,28 +5,25 @@
 #include <time.h>
 #include <emscripten.h>
 
+// Game settings
+#define HIT_TOLERANCE 0.15f
+#define MAX_HITS 15
+
+// Game state
 int screen_width = 800;
 int screen_height = 600;
-
 float angle = 0.0f;
-float speed = 2.0f; // radians per second
-// Direction of rotation: 1 for clockwise, -1 for counter‑clockwise
-int direction = 1;
+float speed = 2.0f;
+float direction = 1.0f;
 float target_angle = 0.0f;
-
 int score = 0;
-// Set when the player misses the target
 bool game_over = false;
-// Set when the player reaches the maximum number of hits
 bool game_won = false;
-float delta_time = 0.016f; // ~60 FPS
 
-// Number of successful pops required to win the game
-#define MAX_HITS 15
-// Tolerance for a successful hit (in radians)
-#define HIT_TOLERANCE 0.15f
+// --- NEW LOGIC FOR TIGHTER ARC ---
+// This variable will track which way the target should jump (left or right).
+float target_arc_direction = 1.0f; 
 
-// For timing inside WASM
 double last_update_time = 0.0;
 
 EMSCRIPTEN_KEEPALIVE
@@ -36,49 +33,57 @@ void set_screen_size(int w, int h) {
 }
 
 float rand_angle() {
-    return ((float)rand() / RAND_MAX) * 2.0f * M_PI;
-}
-
-void new_target() {
-    target_angle = rand_angle();
+    return ((float)rand() / (float)RAND_MAX) * 2.0f * M_PI;
 }
 
 EMSCRIPTEN_KEEPALIVE
 void reset_game() {
+    srand(time(NULL));
     angle = 0.0f;
     speed = 2.0f;
+    direction = 1.0f;
     score = 0;
-    direction = 1;
     game_over = false;
     game_won = false;
-    new_target();
+    target_angle = rand_angle();
+    target_arc_direction = 1.0f; // Reset arc direction
     last_update_time = emscripten_get_now();
 }
 
 EMSCRIPTEN_KEEPALIVE
 void tap_event() {
-    // Ignore taps if the game has already ended (either win or lose)
     if (game_over || game_won) return;
 
-    // Calculate shortest angular distance between the bar and the target
     float diff = fabsf(angle - target_angle);
-    if (diff > M_PI) diff = 2 * M_PI - diff;
+    if (diff > M_PI) diff = 2.0f * M_PI - diff;
 
     if (diff < HIT_TOLERANCE) {
-        // Successful hit
         score++;
-        // Reverse direction and set the target to the opposite side of the circle
-        direction = -direction;
-        target_angle += M_PI;
-        if (target_angle > 2 * M_PI) target_angle -= 2 * M_PI;
-        // Gradually increase speed to ramp up difficulty
-        speed += 0.1f;
-        // Check for win condition
+        speed += 0.15f;
+        direction *= -1.0f;
+
+        // --- NEW ARC CALCULATION ---
+        // Start with a 180-degree arc (M_PI) and reduce it towards a 
+        // minimum of a 45-degree arc (M_PI / 4) as the score increases.
+        float max_arc = M_PI;
+        float min_arc = M_PI / 4.0f;
+        float progress = (float)score / (float)MAX_HITS;
+        float arc_span = max_arc - (progress * (max_arc - min_arc));
+
+        // Move the target by the new arc span
+        target_angle += arc_span * target_arc_direction;
+
+        // Flip the direction for the next jump so it goes back and forth
+        target_arc_direction *= -1.0f;
+
+        // Keep the target angle within the 0 to 2*PI range
+        if (target_angle > 2.0f * M_PI) target_angle -= 2.0f * M_PI;
+        if (target_angle < 0.0f) target_angle += 2.0f * M_PI;
+
         if (score >= MAX_HITS) {
             game_won = true;
         }
     } else {
-        // Missed the target
         game_over = true;
     }
 }
@@ -89,34 +94,21 @@ float get_bar_angle() {
         double now = emscripten_get_now();
         float dt = (float)((now - last_update_time) / 1000.0);
         last_update_time = now;
-
-        // Update the angle based on direction and speed
-        angle += direction * speed * dt;
-        // Wrap the angle into [0, 2π)
-        if (angle >= 2 * M_PI) angle -= 2 * M_PI;
-        if (angle < 0) angle += 2 * M_PI;
+        angle += speed * direction * dt;
+        if (angle > 2.0f * M_PI) angle -= 2.0f * M_PI;
+        if (angle < 0.0f) angle += 2.0f * M_PI;
     }
     return angle;
 }
 
 EMSCRIPTEN_KEEPALIVE
-float get_target_angle() {
-    return target_angle;
-}
+float get_target_angle() { return target_angle; }
 
 EMSCRIPTEN_KEEPALIVE
-int is_game_over() {
-    return game_over ? 1 : 0;
-}
+int is_game_over() { return game_over ? 1 : 0; }
 
-// Return the current score (number of successful pops)
 EMSCRIPTEN_KEEPALIVE
-int get_score() {
-    return score;
-}
+int get_score() { return score; }
 
-// Return 1 when the player has completed the required number of hits
 EMSCRIPTEN_KEEPALIVE
-int is_game_won() {
-    return game_won ? 1 : 0;
-}
+int is_game_won() { return game_won ? 1 : 0; }
