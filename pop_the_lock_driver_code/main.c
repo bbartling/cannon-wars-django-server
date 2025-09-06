@@ -20,7 +20,6 @@ int score = 0;
 bool game_over = false;
 bool game_won = false;
 
-// --- NEW LOGIC FOR TIGHTER ARC ---
 // This variable will track which way the target should jump (left or right).
 float target_arc_direction = 1.0f; 
 
@@ -62,7 +61,6 @@ void tap_event() {
         speed += 0.15f;
         direction *= -1.0f;
 
-        // --- NEW ARC CALCULATION ---
         // Start with a 180-degree arc (M_PI) and reduce it towards a 
         // minimum of a 45-degree arc (M_PI / 4) as the score increases.
         float max_arc = M_PI;

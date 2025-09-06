@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Fly Swatter Tutorial</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
 </head>
+
 <body>
   <div class="content">
 
-  <h1>🪰 Fly Swatter Tutorial</h1>
+    <h1>🪰 Fly Swatter Tutorial</h1>
 
-  <br>
+    <br>
 
 
     <div>
@@ -21,17 +23,37 @@
     </div>
 
     <p>
-      The making of the Fly Swatter game begins with C code, where we design all the game's core mechanics and rules, like how a fly moves around a 2D map, its velocity, and its position. As the game progresses, multiple flies are added to each level to make the game harder, and C efficiently handles all the math and movement dynamics. Since C code cannot run directly in a web browser, a tool called <strong>Emscripten</strong> is used to convert it into <strong>WebAssembly</strong> (WASM), which is like super-fast machine code for browsers. WebAssembly allows complex things, like game physics and behaviors, to run much faster than JavaScript alone. In this project, JavaScript works alongside WebAssembly by handling the visual drawings on the canvas, the sounds, the mouse clicks, and controlling when levels end or restart. Even though this Fly Swatter game is simple enough that it could run without WebAssembly, using it now lays a strong foundation for building even bigger and more complex games in the future!
+      The making of the Fly Swatter game begins with C code, where we design all the game's core mechanics and rules,
+      like how a fly moves around a 2D map, its velocity, and its position. As the game progresses, multiple flies are
+      added to each level to make the game harder, and C efficiently handles all the math and movement dynamics. Since C
+      code cannot run directly in a web browser, a tool called <strong>Emscripten</strong> is used to convert it into
+      <strong>WebAssembly</strong> (WASM), which is like super-fast machine code for browsers. WebAssembly allows
+      complex things, like game physics and behaviors, to run much faster than JavaScript alone. In this project,
+      JavaScript works alongside WebAssembly by handling the visual drawings on the canvas, the sounds, the mouse
+      clicks, and controlling when levels end or restart. Even though this Fly Swatter game is simple enough that it
+      could run without WebAssembly, using it now lays a strong foundation for building even bigger and more complex
+      games in the future!
     </p>
 
-  <br>
+    <br>
 
-  <h2>🧩 Fly Logic with WebAssembly</h2> <p> The C code gets compiled to WebAssembly where it attempts to simulate insect behavior. Each fly can either be in a <code>FLYING</code> or <code>LANDED</code> state, and this behavior is controlled inside the C logic itself. Flies randomly switch between flying for 2–6 seconds and landing for 2–6 seconds, with the pause time scaled based on the remaining game time so the action naturally speeds up near the end. While flying, their velocity and angle are continuously updated, and they bounce off the screen edges. JavaScript simply reads each fly's position, angle, and state from WebAssembly to draw them with the correct orientation and decide whether to flap their wings. This shift in responsibility to WebAssembly makes the browser’s JavaScript loop lighter and allows smoother performance as the number of flies increases. The JavaScript also now checks if any flies are actively flying; if none are, the ambient buzzing sound is paused automatically. This tight integration between low-level logic in C and rendering logic in JS demonstrates the power of combining WebAssembly with browser APIs for high-performance games. </p>
+    <h2>🧩 Fly Logic with WebAssembly</h2>
+    <p> The C code gets compiled to WebAssembly where it attempts to simulate insect behavior. Each fly can either be in
+      a <code>FLYING</code> or <code>LANDED</code> state, and this behavior is controlled inside the C logic itself.
+      Flies randomly switch between flying for 2–6 seconds and landing for 2–6 seconds, with the pause time scaled based
+      on the remaining game time so the action naturally speeds up near the end. While flying, their velocity and angle
+      are continuously updated, and they bounce off the screen edges. JavaScript simply reads each fly's position,
+      angle, and state from WebAssembly to draw them with the correct orientation and decide whether to flap their
+      wings. This shift in responsibility to WebAssembly makes the browser’s JavaScript loop lighter and allows smoother
+      performance as the number of flies increases. The JavaScript also now checks if any flies are actively flying; if
+      none are, the ambient buzzing sound is paused automatically. This tight integration between low-level logic in C
+      and rendering logic in JS demonstrates the power of combining WebAssembly with browser APIs for high-performance
+      games. </p>
 
 
-  <pre><code>
+    <pre><code>
 
-    #include <stdio.h>
+      #include <stdio.h>
       #include <stdlib.h>
       #include <emscripten.h>
       #include <stdbool.h>
@@ -167,12 +189,32 @@
 
 </code></pre>
 
-<h2>💻 Core JavaScript Game Code</h2> 
+    <h2>💻 Core JavaScript Game Code</h2>
 
-<p> The JavaScript side of the Fly Swatter game now handles the orchestration of a much more dynamic and animated gameplay experience, all while offloading heavy logic to C and WebAssembly. The C code determines fly movement, flight vs landing states, and real-time directional angles, and JavaScript simply pulls that data into the game loop. This separation ensures a snappy experience even as more flies are introduced each level. </p> <p> At the start of the game, JavaScript binds to all the WebAssembly-exported C functions using <code>Module.cwrap</code>. These include functions like <code>create_fly</code>, <code>update_flies</code>, and <code>get_fly_angle</code>. Every animation frame, JavaScript checks the current number of flies, pulls their coordinates and angle, and then passes this data to the <code>drawFly</code> function to render them on the canvas. </p> <p> Flies now flap their wings only when flying. When landed, they stop flapping entirely—this is visually represented by freezing the sprite animation on a still frame. The angle returned by C is used to rotate the canvas before drawing each fly, which means flies are now rendered facing the correct direction they're moving. A small correction offset is applied so their nose aligns with their velocity vector. If no flies are flying, the ambient buzzing sound pauses; when one or more take off, the buzz resumes. This gives the game a living, breathing quality. </p> <p> Mouse clicks are tracked in JavaScript and sent to the WebAssembly swat logic to determine if any fly was hit. If all flies are dead, the game progresses to the next level, spawns more flies, and shortens the countdown timer. All game assets, including audio and pixel art fly sprites, are served by a lightweight Flask web server. The sounds are sourced from<a href="https://pixabay.com/sound-effects/search/fly/" target="_blank" rel="noopener noreferrer">Pixabay</a>, and the sprites were drawn by hand in<a href="https://www.pixilart.com/" target="_blank" rel="noopener noreferrer">Pixilart</a>. </p>
+    <p> The JavaScript side of the Fly Swatter game now handles the orchestration of a much more dynamic and animated
+      gameplay experience, all while offloading heavy logic to C and WebAssembly. The C code determines fly movement,
+      flight vs landing states, and real-time directional angles, and JavaScript simply pulls that data into the game
+      loop. This separation ensures a snappy experience even as more flies are introduced each level. </p>
+    <p> At the start of the game, JavaScript binds to all the WebAssembly-exported C functions using
+      <code>Module.cwrap</code>. These include functions like <code>create_fly</code>, <code>update_flies</code>, and
+      <code>get_fly_angle</code>. Every animation frame, JavaScript checks the current number of flies, pulls their
+      coordinates and angle, and then passes this data to the <code>drawFly</code> function to render them on the
+      canvas. </p>
+    <p> Flies now flap their wings only when flying. When landed, they stop flapping entirely—this is visually
+      represented by freezing the sprite animation on a still frame. The angle returned by C is used to rotate the
+      canvas before drawing each fly, which means flies are now rendered facing the correct direction they're moving. A
+      small correction offset is applied so their nose aligns with their velocity vector. If no flies are flying, the
+      ambient buzzing sound pauses; when one or more take off, the buzz resumes. This gives the game a living, breathing
+      quality. </p>
+    <p> Mouse clicks are tracked in JavaScript and sent to the WebAssembly swat logic to determine if any fly was hit.
+      If all flies are dead, the game progresses to the next level, spawns more flies, and shortens the countdown timer.
+      All game assets, including audio and pixel art fly sprites, are served by a lightweight Flask web server. The
+      sounds are sourced from<a href="https://pixabay.com/sound-effects/search/fly/" target="_blank"
+        rel="noopener noreferrer">Pixabay</a>, and the sprites were drawn by hand in<a href="https://www.pixilart.com/"
+        target="_blank" rel="noopener noreferrer">Pixilart</a>. </p>
 
 
-  <pre><code>
+    <pre><code>
 
     function startFlySwatterGame() {
       const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
@@ -370,7 +412,8 @@
     }
     
 </code></pre>
-</div>
+  </div>
 
 </body>
+
 </html>
