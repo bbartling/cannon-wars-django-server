@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fly Swatter Tutorial{% endblock %}
+
+{% block content %}
+<h1>Fly Swatter Tutorial</h1>
+<p>Swat as many flies as you can before time runs out! Use your mouse to click on flies and level up.</p>
+<p>Ready to swat? <a href="{% url 'games:fly_swatter' %}">Start the game</a></p>
+{% endblock %}

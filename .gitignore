@@ -1,89 +1,65 @@
-# Prerequisites
-*.d
-
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# --- WASM stuff ---
-emsdk/
-
-# --- Python Flask stuff ---
-env/
-venv/
+# --- Python ---
 __pycache__/
-*.pyc
-instance/
-*.db
-*.log
-.env
-
-# --- OS/system junk ---
-.DS_Store
-Thumbs.db
-
-# Python environment (if you have a virtualenv or venv)
-env/
-venv/
-
-# Python bytecode cache
-__pycache__/
-*.pyc
-
-# Common OS files
-.DS_Store
-Thumbs.db
-
-# Flask development files
-instance/
-*.db
-
-# Misc
-*.log
-
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
+*.py[cod]
 *.so
-*.so.*
-*.dylib
+*.egg
+*.egg-info/
+*.pyo
+*.pyd
+*.manifest
+*.spec
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+# --- Virtual environments ---
+env/
+venv/
+ENV/
+.venv/
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+# --- Django ---
+*.log
+*.pot
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+.local_settings.py
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# --- Environment / secrets ---
+.env
+*.env
+
+# --- IDE/editor junk ---
+.vscode/
+.idea/
+*.swp
+*~
+.project
+.pydevproject
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Tests ---
+.coverage
+htmlcov/
+*.cover
+*.py,cover
+.cache
+nosetests.xml
+coverage.xml
+*.mo
+junit.xml
+
+# --- Migrations (optional; sometimes you keep these) ---
+# Uncomment if you don’t want migrations in version control
+# */migrations/*
+# !*/migrations/__init__.py
+
+# --- Node / frontend (if applicable) ---
+node_modules/
+npm-debug.log
+yarn-error.log

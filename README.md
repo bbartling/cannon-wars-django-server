@@ -1,9 +1,10 @@
-# WASM Fun
+# Django Games Comments
 
-A hobby project to create simple games with WebAssembly (C → WASM) and serve them using Flask.  
-This is a learning playground for making browser-playable games using C, WebAssembly, and minimal JavaScript.
+This project is a Django rewrite of the browser games site originally built with Flask.  It adds a simple
+blog‐style comments system with email verification and login, while keeping the static game assets and
+templates separate.  Guests can play the games without an account, but only verified users can post
+comments on each game’s page.
 
-* https://bensapi.pythonanywhere.com/
 
 ---
 ## Clone Emscripten SDK
@@ -62,5 +63,64 @@ emcc pop_the_lock_driver_code/main.c -O3 -o static/pop_the_lock.js \
 
 ```
 
-## sound trimmer notes
+## sound trimmer and pixel art site notes
 mp3cut.net
+https://www.pixilart.com/
+
+
+## .env 
+
+```bash
+## Configuration
+
+# Security
+SECRET_KEY=replace-with-a-long-random-secret-key
+DEBUG=1
+
+# Database (using default SQLite, no config needed here)
+
+# Email settings (for dev, emails just print to console)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+DEFAULT_FROM_EMAIL=noreply@example.com
+
+# --- If you want to use Gmail SMTP instead of console backend ---
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=1
+# EMAIL_HOST_USER=yourgmail@gmail.com
+# EMAIL_HOST_PASSWORD=your-app-password   # must be an App Password if 2FA is enabled
+# DEFAULT_FROM_EMAIL=yourgmail@gmail.com
+
+```
+
+3. **Open a Bash console** on PythonAnywhere and create a virtual environment:
+
+```bash
+python3 -m venv ~/envs/django-games-env
+source ~/envs/django-games-env/bin/activate
+pip install django
+```
+
+```bash
+cd ~/mysite/django_games_comments
+python manage.py migrate
+```
+
+
+## Testing routes with curl
+
+A convenience script `run_and_curl.sh` is provided to perform a basic smoke test of the key routes.
+It migrates the database, starts the development server, curls a set of paths, prints the HTTP
+status codes, and stops the server.
+
+To run it from the project directory (where `manage.py` lives):
+
+```bash
+bash run_and_curl.sh
+```
+
+```bash
+python manage.py runserver 127.0.0.1:8000
+```
+

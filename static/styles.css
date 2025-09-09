@@ -176,3 +176,33 @@ body {
     font-size: 0.95rem;
     margin-top: 0.5rem;
 }
+/* Navigation bar styles */
+.site-nav { display:flex; gap:1rem; padding:0.5rem 1rem; background:#111; color:#fff; align-items:center; }
+.site-nav a { color:#eee; text-decoration:none; }
+.site-nav .nav-user { margin-left:auto; color:#ccc; }
+/* Flash messages */
+.flash-messages { list-style: none; padding:0; margin: 1rem 0; }
+.flash-messages li { padding: .5rem .75rem; margin-bottom:.5rem; border-radius:6px; }
+.flash-messages li.success { background:#0a3; color:#fff; }
+.flash-messages li.error { background:#a03; color:#fff; }
+.flash-messages li.info { background:#036; color:#fff; }
+/* Comments section */
+.comments .comment-list { list-style: none; padding: 0; }
+.comments .comment-list li { border-bottom: 1px solid #333; padding:.5rem 0; }
+.comments .meta { font-size: .85rem; color:#bbb; margin-bottom:.25rem; }
+.comments .body { white-space: pre-wrap; }
+.comment-form textarea { width: 100%; }
+.comment-form button { margin-top:.5rem; }
+
+/* --- Game Canvas Layout (from legacy Flask version) --- */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;      /* keep canvas fullscreen without scrollbars */
+}
+
+#gameCanvas {
+  display: block;
+  background: #000;      /* black background for contrast with grey flies */
+}

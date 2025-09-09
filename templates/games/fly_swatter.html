@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fly Swatter{% endblock %}
+
+{% block content %}
+<div class="game-page fly-game">
+
+  <canvas id="gameCanvas"></canvas>
+
+  <audio id="swatSound" src="{% static 'games/fly_swatter/smack.mp3' %}" preload="auto"></audio>
+  <audio id="flySound"  src="{% static 'games/fly_swatter/fly.mp3' %}"   preload="auto" loop></audio>
+  <audio id="winSound"  src="{% static 'games/fly_swatter/game-level-complete.mp3' %}" preload="auto"></audio>
+
+  <script>
+    // preload sprites like before
+    const flySprite1 = new Image();
+    flySprite1.src = "{% static 'games/fly_swatter/fly_sprite_0.png' %}";
+    const flySprite2 = new Image();
+    flySprite2.src = "{% static 'games/fly_swatter/fly_sprite_1.png' %}";
+    window.flyFrames = [flySprite1, flySprite2];
+
+    // WASM boot: start the game when runtime is ready (same pattern as before)
+    var Module = {
+      onRuntimeInitialized: function () {
+        console.log("✅ WASM initialized with global Module");
+        startFlySwatterGame();
+      }
+    };
+  </script>
+
+  <!-- Order: wasm/js runtime first, then your game glue -->
+  <script src="{% static 'games/fly_swatter/fly_swatter.js' %}"></script>
+  <script src="{% static 'games/fly_swatter/fly_swatter_game.js' %}"></script>
+</div>
+
+{% endblock %}

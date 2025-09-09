@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pop the Lock Tutorial{% endblock %}
+
+{% block content %}
+<h1>Pop the Lock Tutorial</h1>
+<p>This game challenges you to time your taps as the rotating bar aligns with the target. Each correct tap speeds up the bar and moves the target. Reach 15 hits to win!</p>
+<figure class="tutorial-image-figure">
+  <img class="tutorial-image" src="{% static 'games/pop_the_lock/garage_band_pop_the_lock.jpg' %}" alt="Pop the Lock illustration">
+</figure>
+<p>Ready to play? <a href="{% url 'games:pop_the_lock' %}">Start the game</a></p>
+{% endblock %}
