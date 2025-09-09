@@ -1,5 +1,3 @@
-
-
 function startPopTheLockGame() {
   const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
   const tapEvent      = Module.cwrap('tap_event',      'void', []);
@@ -59,6 +57,58 @@ function startPopTheLockGame() {
   let gameWon = false;
   let audioIndex = 0;
 
+  let scoreSubmitted = false;
+  /**
+   * Validate a proposed leaderboard name. Only allow typical first names:
+   * - 2 to 20 characters long
+   * - Letters plus spaces, apostrophes or hyphens
+   * This mirrors the server‑side validation logic.
+   */
+  function validateName(name) {
+    if (!name) return false;
+    const trimmed = name.trim();
+    if (trimmed.length < 2 || trimmed.length > 20) return false;
+    return /^[A-Za-z][A-Za-z '\-]{1,19}$/.test(trimmed);
+  }
+
+  /**
+   * Prompts the user for their name and submits the score to the leaderboard.
+   * @param {boolean} wonGame - True if the game was won, false otherwise.
+   */
+  function submitScore(wonGame) {
+    if (scoreSubmitted) return;
+    scoreSubmitted = true;
+    
+    const message = wonGame
+      ? "You win! Enter your first name for the leaderboard (2–20 letters/spaces/'/-):"
+      : "Game Over! Enter your first name for the leaderboard (2–20 letters/spaces/'/-):";
+
+    let playerName = prompt(message);
+    
+    // If user cancels the prompt, just navigate away
+    if (playerName === null) {
+        window.location.href = "/pop_the_lock_leaderboard";
+        return;
+    }
+
+    if (validateName(playerName)) {
+      fetch("/api/pop_leaderboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: playerName.trim(), score })
+      }).catch((err) => {
+        console.error("Error submitting score:", err);
+      }).finally(() => {
+        // Always navigate to the leaderboard after attempting to submit
+        window.location.href = "/pop_the_lock_leaderboard";
+      });
+    } else {
+      // User entered an invalid name but didn't cancel
+      alert("Invalid name format. Please use 2-20 letters, spaces, apostrophes, or hyphens.");
+      window.location.href = "/pop_the_lock_leaderboard";
+    }
+  }
+
   function onClick() {
     if (gameOver || gameWon) {
       console.log('[PopTheLock] Restarting game');
@@ -67,6 +117,7 @@ function startPopTheLockGame() {
       audioIndex = 0;
       gameOver = false;
       gameWon = false;
+      scoreSubmitted = false; // Allow submission on next game
       requestAnimationFrame(draw);
       return;
     }
@@ -77,6 +128,8 @@ function startPopTheLockGame() {
       if (isGameOverWasm() === 1) {
         console.log('[PopTheLock] Game over detected from WASM');
         gameOver = true;
+        submitScore(false);
+        return;
       } else if (typeof isGameWonWasm === 'function' && isGameWonWasm() === 1) {
         console.log('[PopTheLock] Game won detected from WASM');
         gameWon = true;
@@ -84,6 +137,8 @@ function startPopTheLockGame() {
           winSound.currentTime = 0;
           winSound.play();
         }
+        submitScore(true);
+        return;
       } else {
 
         if (audioIndex < score) {
@@ -122,10 +177,18 @@ function startPopTheLockGame() {
       if (isGameOverWasm() === 1) {
         console.log('[PopTheLock] Game over detected from WASM');
         gameOver = true;
+        submitScore(false);
+        return;
       }
 
       if (score >= audioClips.length) {
         gameWon = true;
+        if (winSound) {
+          winSound.currentTime = 0;
+          winSound.play();
+        }
+        submitScore(true);
+        return;
       }
     }
   }
@@ -195,3 +258,4 @@ function startPopTheLockGame() {
 
   init();
 }
+

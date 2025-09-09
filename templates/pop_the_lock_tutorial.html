@@ -14,8 +14,35 @@
     <div>
       <a href="/pop_the_lock_game" class="flash-button">▶️ Play Pop the Lock</a> |
       <a href="/" title="Home">🏠 Home</a> |
+      <a href="/pop_the_lock_leaderboard">🏆 Leaderboard</a> |
       <a href="https://github.com/bbartling/wasm-fun" target="_blank" rel="noopener noreferrer">🐛 Report a Bug</a>
     </div>
+
+    {# Show a short preview of the leaderboard if available #}
+    {% if top_rows is defined %}
+      <div class="tutorial-preview">
+        <h3 class="mb-half">🏆 Top 3 Scores</h3>
+        <table class="board preview">
+          <thead>
+            <tr><th class="rank">#</th><th>Name</th><th class="score">Score</th></tr>
+          </thead>
+          <tbody>
+            {% if top_rows and top_rows|length > 0 %}
+              {% for r in top_rows %}
+                <tr>
+                  <td class="rank">{{ loop.index }}</td>
+                  <td>{{ r.name }}</td>
+                  <td class="score">{{ r.score }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" class="no-scores">No scores yet — be the first!</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+        <p class="view-full-leaderboard"><a href="{{ url_for('pop_the_lock_leaderboard') }}">View full leaderboard →</a></p>
+      </div>
+    {% endif %}
 
     <h2>🧠 Game Logic in C and WebAssembly</h2>
     <p>
@@ -366,11 +393,11 @@ function startPopTheLockGame() {
 </code></pre>
 
     <h2>🔊 Sound Design & Production</h2>
-    <figure style="margin: 1.25rem 0;">
+    <figure class="tutorial-image-figure">
       <img src="{{ url_for('static', filename='garage_band_pop_the_lock.jpg') }}"
         alt="GarageBand keyboard used to record Pop The Lock pop sounds"
-        style="max-width:100%; height:auto; border-radius:12px;" />
-      <figcaption style="opacity:0.85; font-size:0.95rem; margin-top:0.5rem;">
+        class="tutorial-image" />
+      <figcaption class="figcaption">
         GarageBand on iPhone was used to perform each pop as a single keystroke on a deep synth bass patch.
       </figcaption>
     </figure>

@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <title>Fly Swatter Tutorial</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
 </head>
 
 <body>
@@ -15,12 +14,38 @@
 
     <br>
 
-
     <div>
       <a href="/fly_swatter_game" class="flash-button">▶️ Play Fly Swatter</a> |
       <a href="/">🏠 Home</a> |
+      <a href="/fly_swatter_leaderboard">🏆 Leaderboard</a> |
       <a href="https://github.com/bbartling/wasm-fun" target="_blank" rel="noopener noreferrer">🐛 Report a Bug</a>
     </div>
+
+    {# Display top 3 leaderboard preview for fly swatter #}
+    {% if top_rows is defined %}
+      <div class="tutorial-preview">
+        <h3 class="mb-half">🏆 Top 3 Scores</h3>
+        <table class="board preview">
+          <thead>
+            <tr><th class="rank">#</th><th>Name</th><th class="score">Score</th></tr>
+          </thead>
+          <tbody>
+            {% if top_rows and top_rows|length > 0 %}
+              {% for r in top_rows %}
+                <tr>
+                  <td class="rank">{{ loop.index }}</td>
+                  <td>{{ r.name }}</td>
+                  <td class="score">{{ r.score }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" class="no-scores">No scores yet — be the first!</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+        <p class="view-full-leaderboard"><a href="{{ url_for('fly_swatter_leaderboard') }}">View full leaderboard →</a></p>
+      </div>
+    {% endif %}
 
     <p>
       The making of the Fly Swatter game begins with C code, where we design all the game's core mechanics and rules,

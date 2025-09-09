@@ -90,5 +90,89 @@ body {
     from { color: #4CAF50; }
     to { color: #f5f5f5; }
   }
-  
-  
+
+/* --- Leaderboard & Tutorial Styles --- */
+.board { 
+    width: 100%; 
+    max-width: 720px; 
+    margin: 2rem auto; 
+    border-collapse: collapse; 
+}
+.board.preview {
+    max-width: 600px;
+    margin: 0.5rem auto;
+}
+.board th, .board td { 
+    padding: 0.6rem 0.8rem; 
+    border-bottom: 1px solid #444; 
+}
+.board.preview th, .board.preview td {
+    padding: 0.5rem 0.7rem;
+}
+.board th { 
+    text-align: left; 
+    opacity: 0.85; 
+}
+.rank { 
+    width: 3rem; 
+    text-align: right; 
+    opacity: 0.8; 
+}
+.board.preview .rank {
+    width: 2rem;
+}
+.score { 
+    width: 6rem; 
+    font-weight: 700; 
+}
+.board.preview .score {
+    width: 4rem;
+    text-align: right;
+}
+.when { 
+    opacity: 0.75; 
+    font-size: 0.95rem; 
+}
+.topbar { 
+    max-width: 720px; 
+    margin: 1.5rem auto 0; 
+    display: flex; 
+    gap: 1rem; 
+}
+.topbar a { 
+    text-decoration: none; 
+}
+
+/* --- Utility Classes from Inline Styles --- */
+.text-center {
+    text-align: center;
+}
+.mt-half {
+    margin-top: 0.5rem;
+}
+.mb-half {
+    margin-bottom: 0.5rem;
+}
+.tutorial-preview {
+    margin: 1.5rem 0;
+}
+.no-scores {
+    opacity: .8;
+}
+.view-full-leaderboard {
+    text-align: center;
+    margin-top: 0.3rem;
+}
+.tutorial-image-figure {
+    margin: 1.25rem 0;
+}
+.tutorial-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+.figcaption {
+    opacity: 0.85;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
