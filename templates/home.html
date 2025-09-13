@@ -2,15 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WASM Fun - Home</title>
+  <title>Home</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <h1>🎮 Welcome to WASM Fun!</h1>
-  <p>Learn how C and JavaScript work together with WebAssembly.</p>
+  <h1>🎮 Welcome to DIY Browser Games & Tutorials!</h1>
+  <p>
+    All of these projects are vibe-coded with AI, blending C compiled to WebAssembly using 
+    <code>emcc</code> with plain vanilla JavaScript in the browser. The result is a hands-on collection 
+    of simple but powerful DIY games you can run and learn from directly.
+  </p>
+  <p>
+    🌐 View the full project on 
+    <a href="https://github.com/bbartling/diy-browser-games" target="_blank" rel="noopener noreferrer">
+      GitHub
+    </a>.
+  </p>
 
-  <a href="/fly_swatter_tutorial" class="game-button">▶️ Play Fly Swatter</a>
-  <a href="/pop_the_lock_tutorial" class="game-button">🔐 Pop The Lock</a>
+  <a href="{{ url_for('fly_swatter_tutorial') }}" class="game-button">🪰 Fly Swatter</a>
+  <a href="{{ url_for('pop_the_lock') }}" class="game-button">🔐 Pop The Lock</a>
   <a href="#" class="game-button disabled" title="Coming soon!">🚜 Tank War (coming soon!)</a>
+  <a href="#" class="game-button disabled" title="Coming soon!">🩸 Blood Factory (coming soon!)</a>
+
 </body>
 </html>

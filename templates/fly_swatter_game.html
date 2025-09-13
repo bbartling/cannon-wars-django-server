@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fly Swatter WASM</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+      background: black;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<audio id="swatSound" src="{{ url_for('static', filename='smack.mp3') }}" preload="auto"></audio>
+<audio id="flySound" src="{{ url_for('static', filename='fly.mp3') }}" preload="auto" loop></audio>
+<audio id="winSound" src="{{ url_for('static', filename='game-level-complete.mp3') }}" preload="auto"></audio>
+
+<!-- 1. Module block first -->
+<script>
+  const flySprite1 = new Image();
+  flySprite1.src = "{{ url_for('static', filename='fly_sprite_0.png') }}";
+  
+  const flySprite2 = new Image();
+  flySprite2.src = "{{ url_for('static', filename='fly_sprite_1.png') }}";
+  
+  window.flyFrames = [flySprite1, flySprite2];
+  
+  var Module = {
+    onRuntimeInitialized: function() {
+      console.log("✅ WASM initialized with global Module");
+      startFlySwatterGame();
+    }
+  };
+  </script>
+  
+  <script src="{{ url_for('static', filename='fly_swatter.js') }}"></script>
+  <script src="{{ url_for('static', filename='fly_swatter_game.js') }}"></script>  
+
+</body>
+</html>

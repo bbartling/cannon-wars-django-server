@@ -15,6 +15,21 @@ function startFlySwatterGame() {
     const flySound = document.getElementById('flySound');
     const winSound = document.getElementById('winSound');
 
+    // Track whether we've already submitted a score to avoid multiple prompts
+    let scoreSubmitted = false;
+    /**
+     * Validate a proposed leaderboard name. Only allow typical first names:
+     * - 2 to 20 characters long
+     * - Letters plus spaces, apostrophes or hyphens
+     * This mirrors the server‑side validation logic.
+     */
+    function validateName(name) {
+      if (!name) return false;
+      const trimmed = name.trim();
+      if (trimmed.length < 2 || trimmed.length > 20) return false;
+      return /^[A-Za-z][A-Za-z '\-]{1,19}$/.test(trimmed);
+    }
+
     let canvas = document.getElementById('gameCanvas');
     let ctx = canvas.getContext('2d');
   
@@ -88,6 +103,38 @@ function startFlySwatterGame() {
           gameTime -= 1;
           if (gameTime <= 0) {
             gameOver = true;
+            // Prompt for leaderboard name and submit score once when time expires
+            if (!scoreSubmitted) {
+              scoreSubmitted = true;
+              try {
+                const playerName = prompt("Time's up! Enter your first name for the leaderboard (2–20 letters/spaces/'/-):");
+                
+                // If user cancels the prompt, just navigate away
+                if (playerName === null) {
+                    window.location.href = "/fly_swatter_leaderboard";
+                    return;
+                }
+
+                if (validateName(playerName)) {
+                  fetch("/api/fly_leaderboard", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: playerName.trim(), score: level })
+                  }).catch((err) => {
+                      console.error("Error submitting score:", err);
+                  }).finally(() => {
+                    window.location.href = "/fly_swatter_leaderboard";
+                  });
+                } else {
+                  // User entered an invalid name but didn't cancel
+                  alert("Invalid name format. Please use 2-20 letters, spaces, apostrophes, or hyphens.");
+                  window.location.href = "/fly_swatter_leaderboard";
+                }
+              } catch (e) {
+                console.error(e);
+                window.location.href = "/fly_swatter_leaderboard";
+              }
+            }
             flySound.pause();
             flySound.currentTime = 0;
             winSound.pause();
@@ -192,4 +239,4 @@ function startFlySwatterGame() {
     window.startFlySwatterGame = startFlySwatterGame;
     
   }
-  
+
