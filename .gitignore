@@ -18,6 +18,7 @@
 
 # --- WASM stuff ---
 emsdk/
+*.wasm
 
 # --- Python Flask stuff ---
 env/
@@ -28,6 +29,7 @@ instance/
 *.db
 *.log
 .env
+static/*.wasm
 
 # --- OS/system junk ---
 .DS_Store
