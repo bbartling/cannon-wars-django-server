@@ -64,3 +64,17 @@ emcc pop_the_lock_driver_code/main.c -O3 -o static/pop_the_lock.js \
 
 ## sound trimmer notes
 mp3cut.net
+
+
+## Builds with Docker
+```bash
+docker-compose down
+
+# Full build (includes compiling WASMs)
+docker compose build
+docker compose up -d
+docker compose logs -f web
+
+# Dev: just rebuild WASMs into ./static without rebuilding the image
+docker compose run --rm emsdk
+```

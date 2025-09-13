@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual envs
+env/
+venv/
+.venv/
+
+# VCS & editor
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# OS cruft
+.DS_Store
+
+# App stuff you don't need in image
+node_modules/
+*.log
+
+# Local secrets (compose will inject via env_file)
+.env
