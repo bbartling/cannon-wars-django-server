@@ -90,6 +90,7 @@ body {
     from { color: #4CAF50; }
     to { color: #f5f5f5; }
   }
+<<<<<<< HEAD
 
 /* --- Leaderboard & Tutorial Styles --- */
 .board { 
@@ -206,3 +207,7 @@ html, body {
   display: block;
   background: #000;      /* black background for contrast with grey flies */
 }
+=======
+  
+  
+>>>>>>> parent of be4e428 (python anywhere working for leaderboard and profanity check with leaderboard save to json. Need to work on data base for blog feature and admin dashboard.)

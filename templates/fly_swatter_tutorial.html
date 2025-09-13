@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Fly Swatter Tutorial</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+
+<body>
+  <div class="content">
+
+    <h1>🪰 Fly Swatter Tutorial</h1>
+
+    <br>
+
+
+    <div>
+      <a href="/fly_swatter_game" class="flash-button">▶️ Play Fly Swatter</a> |
+      <a href="/">🏠 Home</a> |
+      <a href="https://github.com/bbartling/wasm-fun" target="_blank" rel="noopener noreferrer">🐛 Report a Bug</a>
+    </div>
+
+    <p>
+      The making of the Fly Swatter game begins with C code, where we design all the game's core mechanics and rules,
+      like how a fly moves around a 2D map, its velocity, and its position. As the game progresses, multiple flies are
+      added to each level to make the game harder, and C efficiently handles all the math and movement dynamics. Since C
+      code cannot run directly in a web browser, a tool called <strong>Emscripten</strong> is used to convert it into
+      <strong>WebAssembly</strong> (WASM), which is like super-fast machine code for browsers. WebAssembly allows
+      complex things, like game physics and behaviors, to run much faster than JavaScript alone. In this project,
+      JavaScript works alongside WebAssembly by handling the visual drawings on the canvas, the sounds, the mouse
+      clicks, and controlling when levels end or restart. Even though this Fly Swatter game is simple enough that it
+      could run without WebAssembly, using it now lays a strong foundation for building even bigger and more complex
+      games in the future!
+    </p>
+
+    <br>
+
+    <h2>🧩 Fly Logic with WebAssembly</h2>
+    <p> The C code gets compiled to WebAssembly where it attempts to simulate insect behavior. Each fly can either be in
+      a <code>FLYING</code> or <code>LANDED</code> state, and this behavior is controlled inside the C logic itself.
+      Flies randomly switch between flying for 2–6 seconds and landing for 2–6 seconds, with the pause time scaled based
+      on the remaining game time so the action naturally speeds up near the end. While flying, their velocity and angle
+      are continuously updated, and they bounce off the screen edges. JavaScript simply reads each fly's position,
+      angle, and state from WebAssembly to draw them with the correct orientation and decide whether to flap their
+      wings. This shift in responsibility to WebAssembly makes the browser’s JavaScript loop lighter and allows smoother
+      performance as the number of flies increases. The JavaScript also now checks if any flies are actively flying; if
+      none are, the ambient buzzing sound is paused automatically. This tight integration between low-level logic in C
+      and rendering logic in JS demonstrates the power of combining WebAssembly with browser APIs for high-performance
+      games. </p>
+
+
+    <pre><code>
+
+      #include <stdio.h>
+      #include <stdlib.h>
+      #include <emscripten.h>
+      #include <stdbool.h>
+      #include <math.h>
+      #include <time.h>
+      
+      #define MAX_FLIES 100
+      
+      typedef enum {
+          STATE_FLYING,
+          STATE_LANDED
+      } FlyState;
+      
+      typedef struct {
+          float x;
+          float y;
+          float vx;
+          float vy;
+          float angle;
+          bool alive;
+          FlyState state;
+          float state_timer; // time remaining in current state
+      } Fly;
+      
+      
+      Fly flies[MAX_FLIES];
+      int num_flies = 0;
+      int screen_width = 800;
+      int screen_height = 600;
+      
+      EMSCRIPTEN_KEEPALIVE
+      void set_screen_size(int w, int h) {
+          screen_width = w;
+          screen_height = h;
+          printf("Screen size set: %d x %d\n", screen_width, screen_height);
+      }
+      
+      
+      EMSCRIPTEN_KEEPALIVE
+      void create_fly() {
+          if (num_flies < MAX_FLIES) {
+              flies[num_flies].x = rand() % screen_width;
+              flies[num_flies].y = rand() % screen_height;
+              flies[num_flies].vx = ((rand() % 1000) / 500.0f - 1.0f) * 5.0f;
+              flies[num_flies].vy = ((rand() % 1000) / 500.0f - 1.0f) * 5.0f;
+              flies[num_flies].angle = 0;
+              flies[num_flies].alive = true;
+              flies[num_flies].state = STATE_FLYING;
+              flies[num_flies].state_timer = 2.0f + ((rand() % 4000) / 1000.0f); // 2–6 sec
+              num_flies++;
+          }
+      }
+      
+      EMSCRIPTEN_KEEPALIVE
+      void update_flies(float delta_time, float game_time_remaining) {
+          float max_pause = fminf(6.0f, game_time_remaining);
+      
+          for (int i = 0; i < num_flies; i++) {
+              if (!flies[i].alive) continue;
+      
+              flies[i].state_timer -= delta_time;
+      
+              if (flies[i].state_timer <= 0) {
+                  if (flies[i].state == STATE_FLYING) {
+                      flies[i].state = STATE_LANDED;
+                      flies[i].state_timer = 2.0f + ((rand() % 4000) / 1000.0f) * (max_pause / 6.0f);
+                  } else {
+                      flies[i].state = STATE_FLYING;
+                      flies[i].state_timer = 2.0f + ((rand() % 4000) / 1000.0f);
+                  }
+              }
+      
+              if (flies[i].state == STATE_FLYING) {
+                  flies[i].x += flies[i].vx;
+                  flies[i].y += flies[i].vy;
+                  flies[i].angle = atan2f(flies[i].vy, flies[i].vx);
+      
+                  if (flies[i].x <= 0 || flies[i].x >= screen_width) flies[i].vx = -flies[i].vx;
+                  if (flies[i].y <= 0 || flies[i].y >= screen_height) flies[i].vy = -flies[i].vy;
+              }
+          }
+      }
+      
+      
+      EMSCRIPTEN_KEEPALIVE
+      float get_fly_x(int index) {
+          if (index < num_flies) return flies[index].x;
+          return -1;
+      }
+      
+      EMSCRIPTEN_KEEPALIVE
+      float get_fly_y(int index) {
+          if (index < num_flies) return flies[index].y;
+          return -1;
+      }
+      
+      EMSCRIPTEN_KEEPALIVE
+      int is_fly_alive(int index) {
+          if (index < num_flies) return flies[index].alive ? 1 : 0;
+          return 0;
+      }
+      
+      EMSCRIPTEN_KEEPALIVE
+      int get_num_flies() {
+          return num_flies;
+      }
+      
+      EMSCRIPTEN_KEEPALIVE
+      float get_fly_angle(int index) {
+          if (index < num_flies) return flies[index].angle;
+          return 0.0f;
+      }
+      
+      EMSCRIPTEN_KEEPALIVE
+      void attempt_swat(float mx, float my) {
+          for (int i = 0; i < num_flies; i++) {
+              if (flies[i].alive) {
+                  float dx = flies[i].x - mx;
+                  float dy = flies[i].y - my;
+                  if ((dx*dx + dy*dy) < (30.0f * 30.0f)) { // 30 = swat radius
+                      flies[i].alive = false;
+                  }
+              }
+          }
+      }
+      
+      EMSCRIPTEN_KEEPALIVE
+      int is_fly_flying(int index) {
+          if (index < num_flies) return flies[index].state == STATE_FLYING ? 1 : 0;
+          return 0;
+      }
+      
+
+</code></pre>
+
+    <h2>💻 Core JavaScript Game Code</h2>
+
+    <p> The JavaScript side of the Fly Swatter game now handles the orchestration of a much more dynamic and animated
+      gameplay experience, all while offloading heavy logic to C and WebAssembly. The C code determines fly movement,
+      flight vs landing states, and real-time directional angles, and JavaScript simply pulls that data into the game
+      loop. This separation ensures a snappy experience even as more flies are introduced each level. </p>
+    <p> At the start of the game, JavaScript binds to all the WebAssembly-exported C functions using
+      <code>Module.cwrap</code>. These include functions like <code>create_fly</code>, <code>update_flies</code>, and
+      <code>get_fly_angle</code>. Every animation frame, JavaScript checks the current number of flies, pulls their
+      coordinates and angle, and then passes this data to the <code>drawFly</code> function to render them on the
+      canvas. </p>
+    <p> Flies now flap their wings only when flying. When landed, they stop flapping entirely—this is visually
+      represented by freezing the sprite animation on a still frame. The angle returned by C is used to rotate the
+      canvas before drawing each fly, which means flies are now rendered facing the correct direction they're moving. A
+      small correction offset is applied so their nose aligns with their velocity vector. If no flies are flying, the
+      ambient buzzing sound pauses; when one or more take off, the buzz resumes. This gives the game a living, breathing
+      quality. </p>
+    <p> Mouse clicks are tracked in JavaScript and sent to the WebAssembly swat logic to determine if any fly was hit.
+      If all flies are dead, the game progresses to the next level, spawns more flies, and shortens the countdown timer.
+      All game assets, including audio and pixel art fly sprites, are served by a lightweight Flask web server. The
+      sounds are sourced from<a href="https://pixabay.com/sound-effects/search/fly/" target="_blank"
+        rel="noopener noreferrer">Pixabay</a>, and the sprites were drawn by hand in<a href="https://www.pixilart.com/"
+        target="_blank" rel="noopener noreferrer">Pixilart</a>. </p>
+
+
+    <pre><code>
+
+    function startFlySwatterGame() {
+      const setScreenSize = Module.cwrap('set_screen_size', 'void', ['number', 'number']);
+      const createFly = Module.cwrap('create_fly', 'void', []);
+      const getNumFlies = Module.cwrap('get_num_flies', 'number', []);
+      const getFlyX = Module.cwrap('get_fly_x', 'number', ['number']);
+      const getFlyY = Module.cwrap('get_fly_y', 'number', ['number']);
+      const isFlyAlive = Module.cwrap('is_fly_alive', 'number', ['number']);
+      const attemptSwat = Module.cwrap('attempt_swat', 'void', ['number', 'number']);
+      const getFlyAngle = Module.cwrap('get_fly_angle', 'number', ['number']);
+      const updateFlies = Module.cwrap('update_flies', 'void', ['number', 'number']);
+      const isFlyFlying = Module.cwrap('is_fly_flying', 'number', ['number']);
+      
+      const startingTime = 20;
+      const swatSound = document.getElementById('swatSound');
+      const flySound = document.getElementById('flySound');
+      const winSound = document.getElementById('winSound');
+  
+      let canvas = document.getElementById('gameCanvas');
+      let ctx = canvas.getContext('2d');
+    
+      let canvasW, canvasH;
+      let mouseX = 0;
+      let mouseY = 0;
+      let mouseClicked = false;
+      let flySoundStarted = false;
+      let level = 1;
+      let gameTime = Math.max(5, startingTime - (level - 1));
+      let gameOver = false;
+      let frameCount = 0;
+  
+      function drawFly(x, y, angle, isFlying) {
+        if (!window.flyFrames || window.flyFrames.length < 2) {
+          console.warn("Fly sprites not ready");
+          return;
+        }
+      
+        //const frameIndex = Math.floor(Date.now() / 150) % window.flyFrames.length;
+        const frameIndex = isFlying ? Math.floor(Date.now() / 150) % window.flyFrames.length : 0;
+        const img = window.flyFrames[frameIndex];
+        const size = 40;
+        const correction = 70 * Math.PI / 180;
+      
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle + correction);
+        ctx.shadowColor = 'white';
+        ctx.drawImage(img, -size / 2, -size / 2, size, size); 
+        ctx.restore();
+      }
+      
+      
+      
+      function init() {
+        canvas.width = document.body.clientWidth;
+        canvas.height = document.body.clientHeight;
+        canvasW = canvas.width;
+        canvasH = canvas.height;
+        setScreenSize(canvasW, canvasH);
+        
+        console.log("createFly() called in init");
+        createFly(); // Create 1 fly
+    
+        window.addEventListener('resize', () => {
+          canvas.width = document.body.clientWidth;
+          canvas.height = document.body.clientHeight;
+          canvasW = canvas.width;
+          canvasH = canvas.height;
+          setScreenSize(canvasW, canvasH);
+        });
+    
+        canvas.addEventListener('mousedown', (event) => {
+          mouseX = event.clientX;
+          mouseY = event.clientY;
+          mouseClicked = true;
+    
+          if (!flySoundStarted) {
+            flySound.currentTime = 0;
+            flySound.play();
+            flySoundStarted = true;
+          }
+    
+          swatSound.currentTime = 0;
+          swatSound.play();
+        });
+    
+        setInterval(() => {
+          if (!gameOver) {
+            gameTime -= 1;
+            if (gameTime <= 0) {
+              gameOver = true;
+              flySound.pause();
+              flySound.currentTime = 0;
+              winSound.pause();
+              swatSound.pause();
+            }
+          }
+        }, 1000);
+    
+        requestAnimationFrame(gameLoop);
+      }
+    
+      let now = performance.now();
+      let lastTime = now;
+      
+      function gameLoop() {
+        let currentTime = performance.now();
+        let delta = (currentTime - lastTime) / 1000; // in seconds
+        lastTime = currentTime;
+      
+        ctx.clearRect(0, 0, canvasW, canvasH);
+      
+        if (!gameOver) {
+          updateFlies(delta, gameTime);
+        }
+      
+        let numFlies = getNumFlies();
+        let anyFlyFlying = false;
+      
+        for (let i = 0; i < numFlies; i++) {
+          if (isFlyAlive(i)) {
+            let x = getFlyX(i);
+            let y = getFlyY(i);
+            let angle = getFlyAngle(i);
+            const flying = isFlyFlying(i);
+      
+            if (flying) {
+              anyFlyFlying = true;
+            }
+      
+            drawFly(x, y, angle, flying);
+          }
+        }
+      
+        // Fly buzzing sound control
+        if (anyFlyFlying && !flySoundStarted) {
+          flySound.play();
+          flySoundStarted = true;
+        } else if (!anyFlyFlying && flySoundStarted) {
+          flySound.pause();
+          flySoundStarted = false;
+        }
+      
+        if (frameCount++ % 60 === 0) {
+          console.log(`🌀 Level ${level}, alive flies: ${numFlies}`);
+        }
+      
+        if (mouseClicked) {
+          ctx.beginPath();
+          ctx.arc(mouseX, mouseY, 30, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+          ctx.fill();
+          ctx.closePath();
+      
+          attemptSwat(mouseX, mouseY);
+      
+          let allDead = true;
+          for (let i = 0; i < numFlies; i++) {
+            if (isFlyAlive(i)) {
+              allDead = false;
+              break;
+            }
+          }
+      
+          if (allDead) {
+            winSound.currentTime = 0;
+            winSound.play();
+            level += 1;
+            gameTime = Math.max(5, startingTime - (level - 1));
+            for (let i = 0; i < level; i++) {
+              createFly();
+            }
+          }
+      
+          mouseClicked = false;
+        }
+      
+        ctx.fillStyle = 'white';
+        ctx.font = '24px Arial';
+        ctx.fillText('Time Left: ' + gameTime, 20, 40);
+        ctx.fillText('Level: ' + level, 20, 70);
+      
+        if (gameOver) {
+          ctx.fillStyle = 'yellow';
+          ctx.font = '48px Arial';
+          ctx.fillText('Game Over!', canvasW / 2 - 100, canvasH / 2);
+        } else {
+          requestAnimationFrame(gameLoop);
+        }
+      }    
+    
+      init();
+      window.startFlySwatterGame = startFlySwatterGame;
+      
+    }
+    
+</code></pre>
+  </div>
+
+</body>
+
+</html>
