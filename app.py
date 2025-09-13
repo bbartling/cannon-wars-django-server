@@ -12,32 +12,49 @@ BASE_DIR = os.path.dirname(__file__)
 LEADERBOARD_FILES = {
     "pop": os.path.join(BASE_DIR, "leaderboard_pop.json"),
     "fly": os.path.join(BASE_DIR, "leaderboard_fly.json"),
+    "blood": os.path.join(BASE_DIR, "leaderboard_blood.json"),
 }
 
 _NAME_RE = re.compile(r"^[A-Za-z][A-Za-z '\-]{1,19}$")
 # --- EXPANDED PROFANITY LIST ---
 _DEFAULT_PROFANITY = {
-    "poop", "fart", "dick", "ass", "shit", "fuck", "bitch", "cunt", "nigger", 
-    "damn", "hell", "piss"
+    "poop",
+    "fart",
+    "dick",
+    "ass",
+    "shit",
+    "fuck",
+    "bitch",
+    "cunt",
+    "nigger",
+    "damn",
+    "hell",
+    "piss",
 }
 
 
 def _normalize_text(text: str) -> str:
     """Replaces leetspeak and other common character substitutions with normal characters."""
     substitutions = {
-        '@': 'a', '4': 'a',
-        '3': 'e',
-        '1': 'i', '!': 'i', '|': 'i',
-        '0': 'o',
-        '5': 's', '$': 's',
-        '7': 't', '+': 't',
-        '8': 'b',
-        '9': 'g',
+        "@": "a",
+        "4": "a",
+        "3": "e",
+        "1": "i",
+        "!": "i",
+        "|": "i",
+        "0": "o",
+        "5": "s",
+        "$": "s",
+        "7": "t",
+        "+": "t",
+        "8": "b",
+        "9": "g",
     }
     normalized_text = text.lower()
     for char, replacement in substitutions.items():
         normalized_text = normalized_text.replace(char, replacement)
     return normalized_text
+
 
 def _compile_profanity_re():
     """
@@ -57,13 +74,15 @@ def _compile_profanity_re():
     # Create a single regex pattern: \b(word1|word2|...)\b
     # The \b ensures we match whole words only (e.g., doesn't match 'ass' in 'class')
     pattern = r"\b(" + "|".join(words) + r")\b"
-    
+
     # Compile the pattern for maximum performance, ignoring case
     print("Loaded profanity")
     return re.compile(pattern, re.IGNORECASE)
 
+
 # Compile the profanity pattern at import time. This is the correct location.
 _PROFANITY_RE = _compile_profanity_re()
+
 
 def _censor_profanity(name: str) -> str:
     """
@@ -75,23 +94,23 @@ def _censor_profanity(name: str) -> str:
 
     # --- IMPROVED LOGIC: Check the normalized name ---
     normalized_name = _normalize_text(name)
-    
+
     # Find all matches in the normalized string
     matches = list(_PROFANITY_RE.finditer(normalized_name))
     if not matches:
         return name
 
     print(f"Censoring profane name. Original: '{name}'")
-    
+
     # Convert original name to a list of characters to modify it
     censored_chars = list(name)
-    
+
     # Replace the corresponding characters in the *original* name
     for match in matches:
         start, end = match.span()
         for i in range(start, end):
-            censored_chars[i] = '*'
-            
+            censored_chars[i] = "*"
+
     censored_name = "".join(censored_chars)
     print(f"Censored result: '{censored_name}'")
     return censored_name
@@ -109,6 +128,7 @@ def _load_board(game_key: str):
         print(f"Error loading leaderboard file {path}: {e}")
         return []
 
+
 def _save_board(game_key: str, rows):
     """Write the leaderboard back to disk, creating it if necessary."""
     path = LEADERBOARD_FILES.get(game_key)
@@ -120,10 +140,12 @@ def _save_board(game_key: str, rows):
     except IOError as e:
         print(f"Error saving leaderboard file {path}: {e}")
 
+
 def _sorted(rows):
     """Sort leaderboard entries descending by score, then by timestamp (newest first)."""
     rows.sort(key=lambda r: (int(r.get("score", 0)), r.get("ts", "")), reverse=True)
     return rows
+
 
 def _insert_score(game_key: str, name: str, score: int, max_score: int) -> tuple:
     """
@@ -133,7 +155,7 @@ def _insert_score(game_key: str, name: str, score: int, max_score: int) -> tuple
     # First, validate the name's format.
     if not name or not _NAME_RE.match(name):
         return {"ok": False, "error": "Invalid name format"}, 400
-    
+
     # Censor any profanity in the name
     censored_name = _censor_profanity(name)
 
@@ -143,18 +165,24 @@ def _insert_score(game_key: str, name: str, score: int, max_score: int) -> tuple
         return {"ok": False, "error": "Invalid score"}, 400
     if not (0 <= s <= max_score):
         return {"ok": False, "error": "Invalid score"}, 400
-    
+
     rows = _load_board(game_key)
-    rows.append({
-        "name": censored_name.strip(),
-        "score": s,
-        "ts": datetime.datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
-    })
+    rows.append(
+        {
+            "name": censored_name.strip(),
+            "score": s,
+            "ts": datetime.datetime.now(timezone.utc)
+            .isoformat(timespec="seconds")
+            .replace("+00:00", "Z"),
+        }
+    )
     rows = _sorted(rows)[:MAX_ROWS]
     _save_board(game_key, rows)
     return {"ok": True}, 200
 
+
 # ---- Page Routes ----
+
 
 @app.route("/")
 def home():
@@ -163,9 +191,11 @@ def home():
     fly_rows = _sorted(_load_board("fly"))[:3]
     return render_template("home.html", top_pop=pop_rows, top_fly=fly_rows)
 
+
 @app.route("/fly_swatter_game")
 def fly_swatter():
     return render_template("fly_swatter_game.html")
+
 
 @app.route("/fly_swatter_tutorial")
 def fly_swatter_tutorial():
@@ -173,10 +203,12 @@ def fly_swatter_tutorial():
     fly_rows = _sorted(_load_board("fly"))[:3]
     return render_template("fly_swatter_tutorial.html", top_rows=fly_rows)
 
+
 @app.route("/pop_the_lock_game")
 def pop_the_lock():
     """Render the Pop the Lock WASM game."""
     return render_template("pop_the_lock_game.html")
+
 
 @app.route("/pop_the_lock_tutorial")
 def pop_the_lock_tutorial():
@@ -184,30 +216,53 @@ def pop_the_lock_tutorial():
     pop_rows = _sorted(_load_board("pop"))[:3]
     return render_template("pop_the_lock_tutorial.html", top_rows=pop_rows)
 
+
 @app.route("/pop_the_lock_leaderboard")
 def pop_the_lock_leaderboard():
     rows = _sorted(_load_board("pop"))
     return render_template("pop_the_lock_leaderboard.html", rows=rows[:MAX_ROWS])
+
 
 @app.route("/fly_swatter_leaderboard")
 def fly_swatter_leaderboard():
     rows = _sorted(_load_board("fly"))
     return render_template("fly_swatter_leaderboard.html", rows=rows[:MAX_ROWS])
 
-# ---- API Routes ----
+
+# ---- Blood Factory Routes ----
+@app.route("/blood_factory_game")
+def blood_factory_game():
+    """Render the Blood Factory game page."""
+    return render_template("blood_factory_game.html")
+
+
+@app.route("/blood_factory_tutorial")
+def blood_factory_tutorial():
+    """Render the Blood Factory tutorial with a top‑3 score preview."""
+    blood_rows = _sorted(_load_board("blood"))[:3]
+    return render_template("blood_factory_tutorial.html", top_rows=blood_rows)
+
+
+@app.route("/blood_factory_leaderboard")
+def blood_factory_leaderboard():
+    """Render the Blood Factory leaderboard."""
+    rows = _sorted(_load_board("blood"))
+    return render_template("blood_factory_leaderboard.html", rows=rows[:MAX_ROWS])
+
 
 @app.route("/api/pop_leaderboard", methods=["GET", "POST"])
 def api_pop_leaderboard():
     if request.method == "GET":
         rows = _sorted(_load_board("pop"))
         return jsonify(rows[:MAX_ROWS])
-    
+
     # POST
     data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     score = data.get("score")
     payload, code = _insert_score("pop", name, score, max_score=15)
     return jsonify(payload), code
+
 
 @app.route("/api/fly_leaderboard", methods=["GET", "POST"])
 def api_fly_leaderboard():
@@ -222,8 +277,22 @@ def api_fly_leaderboard():
     payload, code = _insert_score("fly", name, score, max_score=999)
     return jsonify(payload), code
 
-# ---- Main Execution ----
 
+@app.route("/api/blood_leaderboard", methods=["GET", "POST"])
+def api_blood_leaderboard():
+    """API endpoint for fetching and submitting Blood Factory scores."""
+    if request.method == "GET":
+        rows = _sorted(_load_board("blood"))
+        return jsonify(rows[:MAX_ROWS])
+    # POST
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    score = data.get("score")
+    # Allow a generous maximum score for kills; kills rarely exceed this
+    payload, code = _insert_score("blood", name, score, max_score=999)
+    return jsonify(payload), code
+
+
+# ---- Main Execution ----
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
