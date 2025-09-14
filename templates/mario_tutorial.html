@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mario Maker Tutorial</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="content">
+    <h1>👷 Mario Maker Tutorial</h1>
+    <br>
+    <div>
+      <a href="/mario_editor" class="flash-button">🛠️ Level Editor</a> |
+      <a href="/">🏠 Home</a> |
+      <a href="/mario_leaderboard">🏆 Leaderboard</a> |
+      <a href="https://github.com/bbartling/diy-browser-games" target="_blank" rel="noopener noreferrer">🐛 Report a Bug</a>
+    </div>
+    {% if top_rows is defined %}
+      <div class="tutorial-preview">
+        <h3 class="mb-half">🏆 Top 3 Scores</h3>
+        <table class="board preview">
+          <thead>
+            <tr><th class="rank">#</th><th>Name</th><th class="score">Score</th></tr>
+          </thead>
+          <tbody>
+            {% if top_rows and top_rows|length > 0 %}
+              {% for r in top_rows %}
+                <tr>
+                  <td class="rank">{{ loop.index }}</td>
+                  <td>{{ r.name }}</td>
+                  <td class="score">{{ r.score }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" class="no-scores">No scores yet — be the first!</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+        <p class="view-full-leaderboard"><a href="/mario_leaderboard">View full leaderboard →</a></p>
+      </div>
+    {% endif %}
+    <p>
+      This Mario Maker demo shows how to combine high‑performance C code with the flexibility of JavaScript. The core
+      engine — including gravity, jumping, collision detection and simple enemy logic — is written in C and compiled to
+      <strong>WebAssembly</strong> using Emscripten. JavaScript handles rendering on the canvas, user input, and
+      orchestrates the camera so you get a smooth, zoomed‑in view of the action. When you use the level editor, the
+      grid you draw lives entirely in JavaScript until you hit “Play Level”, at which point it’s serialised and
+      handed off to the C engine via a single function call. This separation keeps the editor responsive while still
+      benefiting from the speed of WebAssembly during gameplay.
+    </p>
+    <br>
+    <h2>🎨 Build Levels in the Browser</h2>
+    <p>
+      The level editor is written entirely in JavaScript. It maintains its own 2D array representing your level and
+      updates instantly as you click and drag to place tiles. There’s no need to talk to WebAssembly until you’re
+      ready to play. When you click the play button, the array is converted into a comma‑separated string and passed
+      into the C function <code>load_level()</code>. From that point on, the WebAssembly module runs the high‑speed
+      physics simulation, while the editor UI disappears and the game canvas takes over.
+    </p>
+  </div>
+</body>
+</html>

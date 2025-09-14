@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mario Maker Editor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+  <div id="editorContainer" class="editor-container">
+    <h1>👷 Mario Maker Level Editor</h1>
+    <p>Create your own level, then click "Play Level" to test it!</p>
+    <div class="editor-controls">
+      <button id="playButton" class="flash-button">▶️ Play Level</button>
+      <a href="/">🏠 Home</a>
+    </div>
+    <div id="palette"></div>
+    <canvas id="editorCanvas"></canvas>
+  </div>
+
+  <div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+  
+  <script src="{{ url_for('static', filename='mario_game.js') }}"></script>
+  
+  <script src="{{ url_for('static', filename='mario_editor.js') }}"></script>
+  
+  <script>
+    var Module = {
+      onRuntimeInitialized: function() {
+        console.log('✅ WASM engine initialised.');
+        // NOW that the engine is ready, we can initialize the editor UI.
+        initEditor();
+      }
+    };
+  </script>
+  
+  <script src="{{ url_for('static', filename='mario_engine.js') }}"></script>
+</body>
+</html>

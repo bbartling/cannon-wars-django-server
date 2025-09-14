@@ -9,6 +9,7 @@ WORKDIR /src
 COPY fly_swatter_driver_code/ fly_swatter_driver_code/
 COPY pop_the_lock_driver_code/ pop_the_lock_driver_code/
 COPY blood_factory_driver_code/ blood_factory_driver_code/
+COPY mario_driver_code/ mario_driver_code/
 
 # Output directory that will be copied into the final image
 RUN mkdir -p static
@@ -33,6 +34,15 @@ RUN emcc pop_the_lock_driver_code/main.c -O3 -o static/pop_the_lock.js \
 RUN echo "[emsdk] Compiling Blood Factory ..." && \
     emcc blood_factory_driver_code/main.c -O3 -o static/blood_factory.js \
       -s EXPORTED_FUNCTIONS='["_set_screen_size","_init_game","_update_game","_move_player","_player_attack","_get_player_x","_get_player_y","_get_num_enemies","_get_enemy_x","_get_enemy_y","_is_enemy_alive","_is_game_over","_get_score"]' \
+      -s EXPORTED_RUNTIME_METHODS='["cwrap"]' \
+      -s NO_EXIT_RUNTIME=1 \
+      -s ALLOW_MEMORY_GROWTH=1 \
+      -s WASM=1
+
+# --- Build Mario Maker ---
+RUN echo "[emsdk] Compiling Mario Game ..." && \
+    emcc mario_driver_code/main.c -O3 -o static/mario_engine.js \
+      -s EXPORTED_FUNCTIONS='["_load_level","_init_game","_update_game","_get_player_x","_get_player_y","_get_level_width","_get_level_height","_get_tile","_get_num_enemies","_get_enemy_x","_get_enemy_y","_is_enemy_alive","_is_game_over"]' \
       -s EXPORTED_RUNTIME_METHODS='["cwrap"]' \
       -s NO_EXIT_RUNTIME=1 \
       -s ALLOW_MEMORY_GROWTH=1 \

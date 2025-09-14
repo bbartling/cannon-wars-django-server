@@ -3,7 +3,8 @@ import re
 import json
 import datetime
 from datetime import timezone
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for 
+
 
 app = Flask(__name__)
 
@@ -13,6 +14,7 @@ LEADERBOARD_FILES = {
     "pop": os.path.join(BASE_DIR, "leaderboard_pop.json"),
     "fly": os.path.join(BASE_DIR, "leaderboard_fly.json"),
     "blood": os.path.join(BASE_DIR, "leaderboard_blood.json"),
+    "mario": os.path.join(BASE_DIR, "leaderboard_mario.json"),
 }
 
 _NAME_RE = re.compile(r"^[A-Za-z][A-Za-z '\-]{1,19}$")
@@ -290,6 +292,46 @@ def api_blood_leaderboard():
     score = data.get("score")
     # Allow a generous maximum score for kills; kills rarely exceed this
     payload, code = _insert_score("blood", name, score, max_score=999)
+    return jsonify(payload), code
+
+# ---- Mario Maker Routes ----
+@app.route("/mario_game")
+def mario_game_page():
+    """The editor is now the main page, so redirect there."""
+    return redirect(url_for("mario_editor_page")) # This now redirects
+
+
+@app.route("/mario_editor")
+def mario_editor_page():
+    """Render the Mario Maker level editor page."""
+    return render_template("mario_editor.html")
+
+
+@app.route("/mario_tutorial")
+def mario_tutorial_page():
+    """Render the tutorial for Mario Maker with optional top scores preview."""
+    rows = _sorted(_load_board("mario"))[:3]
+    return render_template("mario_tutorial.html", top_rows=rows)
+
+
+@app.route("/mario_leaderboard")
+def mario_leaderboard_page():
+    """Render the leaderboard for Mario Maker."""
+    rows = _sorted(_load_board("mario"))
+    return render_template("mario_leaderboard.html", rows=rows[:MAX_ROWS])
+
+
+@app.route("/api/mario_leaderboard", methods=["GET", "POST"])
+def api_mario_leaderboard():
+    """API endpoint for fetching and submitting Mario Maker scores."""
+    if request.method == "GET":
+        rows = _sorted(_load_board("mario"))
+        return jsonify(rows[:MAX_ROWS])
+    # POST
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    score = data.get("score")
+    payload, code = _insert_score("mario", name, score, max_score=999999)
     return jsonify(payload), code
 
 
