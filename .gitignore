@@ -1,124 +1,45 @@
-# Prerequisites
-*.d
-
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# --- WASM stuff ---
-emsdk/
-*.wasm
-
-# --- Python Flask stuff ---
-env/
-venv/
+# ---- Python / Django ----
 __pycache__/
 *.pyc
-instance/
-*.db
+*.pyo
+*.pyd
+*.sqlite3
+db.sqlite3
 *.log
+*.pot
+*.py[co]
+*.egg-info/
+.eggs/
+*.egg
+.Python
+venv/
 .env
-static/*.wasm
-
-# --- OS/system junk ---
-.DS_Store
-Thumbs.db
-
-# Python environment (if you have a virtualenv or venv)
 env/
-venv/
+.venv/
 
-# Python bytecode cache
-__pycache__/
-*.pyc
+# Django collectstatic output
+/staticfiles/
 
-# Common OS files
-.DS_Store
-Thumbs.db
+# ---- Docker ----
+*.pid
+*.seed
+*.bak
 
-# Flask development files
-instance/
-*.db
-
-# Misc
-*.log
-
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-===============
-Unity Generated
-===============
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
-
-MemoryCaptures can get excessive in size.
-They also could contain sensitive data
-/[Mm]emoryCaptures/
-
-Asset meta data should only be ignored when the corresponding asset is also ignored
-!/[Aa]ssets/**/*.meta
-
-===============
-Rider Generated
-===============
-/[Aa]ssembly-CSharp.csproj
-/[Aa]ssembly-CSharp-Editor.csproj
-/[Aa]ssembly-CSharp-firstpass.csproj
-/[Aa]ssembly-CSharp-firstpass-Editor.csproj
-.vs/
-.idea/
+# ---- Unity Project (keep Assets/, ProjectSettings/, Packages/) ----
+# Ignore Unity editor caches and transient files
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+UserSettings/
+# Unity IDE/solution files
+*.csproj
+*.unityproj
 *.sln
 *.suo
+*.tmp
 *.user
 *.userprefs
 *.pidb
@@ -129,34 +50,13 @@ Rider Generated
 *.opendb
 *.VC.db
 
-=================
-Visual Studio Mac
-=================
-*.csproj.user
-*.sou
-*.dbmdl
-*/[Bb]in/
-*/[Dd]ebug/
+# ---- Unity WebGL build outputs (Django serves these, don’t track them) ----
+unity_build/Build/
+unity_build/TemplateData/
+unity_build/index.html
 
-===================
-Python / Flask
-===================
-env/
-venv/
-pycache/
-*.pyc
-instance/
-*.db
-*.log
-.env
-static/cannon_game/Build/
-static/cannon_game/TemplateData/
-
-===================
-OS / System Files
-===================
+# ---- OS / Editor junk ----
 .DS_Store
 Thumbs.db
-
-
-
+.idea/
+.vscode/

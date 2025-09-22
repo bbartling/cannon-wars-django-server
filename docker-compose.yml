@@ -1,27 +1,10 @@
+version: "3.8"
 services:
-  # Primary web app
   web:
     build: .
-    container_name: wasm-fun-web
     ports:
-      - "5000:5000"
-    environment:
-      - FLASK_ENV=production
-    # Uncomment the volume below if you want live code edits without rebuilding.
-    # Note: If you mount the whole project, it will override the built static/
-    # directory from the image. For dev rebuilds of WASM, use the "emsdk" service below.
-    # volumes:
-    #   - ./:/app
-
-  # Optional: standalone WASM builder that writes to your local ./static
-  # Usage:
-  #   docker compose run --rm emsdk
-  # This rebuilds WASM artifacts into ./static without rebuilding the web image.
-  emsdk:
-    image: emscripten/emsdk:3.1.68
-    working_dir: /work
+      - "8000:8000"
     volumes:
-      - ./:/work
-    entrypoint: [ "bash", "-lc" ]
-    command: >
-      "./build_wasm.sh"
+      - ./:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=diy_django.settings
