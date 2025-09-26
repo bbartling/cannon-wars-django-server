@@ -1,6 +1,14 @@
+from django.contrib import admin
 from django.urls import path
-from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+from game import views as game_views
+
 urlpatterns = [
-    path('', views.home, name='home'),
-    path('play/', views.play, name='play'),
+    path('admin/', admin.site.urls),
+    path('', game_views.home, name='home'),
+    path('play/', game_views.play, name='play'),
 ]
+
+# Serve /unity/* from the Unity WebGL export directory
+urlpatterns += static('/unity/', document_root=settings.UNITY_BUILD_DIR)

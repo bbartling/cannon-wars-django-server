@@ -46,6 +46,7 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'diy_django.wsgi.application'
 
 DATABASES = {
@@ -66,7 +67,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR,              # so root/thumbnail.png is served via {% static 'thumbnail.png' %}
-    BASE_DIR / 'unity_build',  # serve Unity build files at /unity/
+    BASE_DIR / 'unity_web_build',  # serve Unity build files at /unity/
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -76,3 +77,6 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+
+UNITY_BUILD_DIR = BASE_DIR / "unity_web_build"
