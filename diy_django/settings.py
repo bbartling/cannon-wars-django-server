@@ -64,11 +64,13 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'     # collectstatic target
+
+# Project static sources (dev side)
 STATICFILES_DIRS = [
-    BASE_DIR,              # so root/thumbnail.png is served via {% static 'thumbnail.png' %}
-    BASE_DIR / 'unity_web_build',  # serve Unity build files at /unity/
+    BASE_DIR / 'static',                    # e.g. static/thumbnail.png, static/styles.css
 ]
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

@@ -1,0 +1,33 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Cannon Wars — {{ title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{% static 'styles.css' %}">
+  <style>
+    body{margin:0;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto;color:#e5e7eb}
+    .wrap{max-width:1000px;margin:2rem auto;padding:0 1rem}
+    .files{display:flex;gap:.75rem;flex-wrap:wrap;margin:.75rem 0 1.25rem}
+    .files a{display:inline-block;padding:.45rem .7rem;border-radius:.55rem;text-decoration:none;border:1px solid rgba(255,255,255,.12);color:#e5e7eb}
+    .files a[aria-current="page"]{border-color:#38bdf8;box-shadow:inset 0 0 0 1px rgba(56,189,248,.25)}
+    pre{background:#0b0b0f;color:#f8fafc;border-radius:12px;padding:1rem;overflow:auto;border:1px solid rgba(255,255,255,.08);line-height:1.4;font-size:13.5px;font-family:Consolas,"Fira Code",ui-monospace,monospace}
+    a{color:#38bdf8}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p><a href="{% url 'home' %}">← back to home</a></p>
+
+    <nav class="files" aria-label="Files">
+      <a href="{% url 'tutorial' 'EnemyCannonAI' %}" aria-current="{% if slug == 'EnemyCannonAI' %}page{% endif %}">EnemyCannonAI.cs</a>
+      <a href="{% url 'tutorial' 'CannonManager' %}" aria-current="{% if slug == 'CannonManager' %}page{% endif %}">CannonManager.cs</a>
+      <a href="{% url 'tutorial' 'ProjectileCameraController' %}" aria-current="{% if slug == 'ProjectileCameraController' %}page{% endif %}">ProjectileCameraController.cs</a>
+    </nav>
+
+    <h1 style="margin-top:.25rem">{{ title }}</h1>
+    <pre><code>{{ code|escape }}</code></pre>
+  </main>
+</body>
+</html>
