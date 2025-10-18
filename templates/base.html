@@ -1,0 +1,61 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Bens Physics Hub Sims{% endblock %}</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{% static 'home.css' %}">
+  <meta name="theme-color" content="#0a3d62" />
+</head>
+
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'home' %}">Bens Physics Hub Sims</a>
+
+    <div class="spacer"></div>
+
+    <!-- ☕ Buy Me a Coffee (via PayPal) -->
+    <form action="{{ PAYPAL_DONATE_URL }}" method="post" target="_blank" rel="noopener">
+      <input type="hidden" name="business" value="{{ PAYPAL_BUSINESS }}">
+      <input type="hidden" name="item_name" value="Buy me a coffee ☕">
+      <input type="hidden" name="currency_code" value="USD">
+      <input type="hidden" name="amount" value="5.00">
+      <button type="submit" class="coffee-btn" title="Buy me a coffee via PayPal">
+        <!-- You can replace this SVG with an image if you prefer -->
+        <svg class="coffee-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 8h1a3 3 0 0 1 0 6h-1v1a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8h14Zm0 2H6v5a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3v-5Zm2 1h-1v3h1a1 1 0 0 0 0-3Z"/>
+          <path d="M4 20h16v2H4z"/>
+        </svg>
+        <span>Buy me a coffee</span>
+      </button>
+    </form>
+
+      <a class="btn" href="{% url 'home' %}">Home</a>
+
+      {% if request.user.is_authenticated and request.user.is_staff %}
+        <a class="btn" href="{% url 'studio_dashboard' %}">Studio</a>
+        <a class="btn" href="/admin/">Admin</a>
+
+        <!-- POST logout as a pill -->
+        <form method="post" action="{% url 'logout' %}" class="nav-form">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="/" />
+          <button type="submit" class="btn">Sign out</button>
+        </form>
+      {% else %}
+        <a class="btn" href="{% url 'login' %}?next=/studio/">Sign in</a>
+      {% endif %}
+</nav>
+
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>© Bens Physics Hub Sims — Made with Unity &amp; Django</footer>
+</body>
+</html>

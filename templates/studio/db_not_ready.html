@@ -1,0 +1,23 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Studio — DB not ready</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{% static 'home.css' %}">
+</head>
+<body>
+<header class="topbar"><div class="brand">Bens Physics Hub Sims</div></header>
+
+<main class="wrap">
+  <h1>Database not ready</h1>
+  <p class="subtle">Apply migrations, then reload this page:</p>
+  <pre class="subtle">python manage.py makemigrations games
+python manage.py migrate</pre>
+  <p><a class="btn" href="{% url 'studio_dashboard' %}">Try again</a></p>
+</main>
+
+<footer>© Bens Physics Hub Sims — Database Setup</footer>
+</body>
+</html>

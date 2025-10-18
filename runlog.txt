@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/oai/share/twtag-django-server-develop/twtag-django-server-develop/manage.py", line 10, in <module>
+    main()
+  File "/home/oai/share/twtag-django-server-develop/twtag-django-server-develop/manage.py", line 6, in main
+    from django.core.management import execute_from_command_line
+ModuleNotFoundError: No module named 'django'

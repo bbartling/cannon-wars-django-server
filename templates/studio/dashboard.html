@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Studio — Games{% endblock %}
+
+{% block content %}
+  <h1>Simulations</h1>
+
+  {% if not db_ready %}
+    <p class="subtle">Database not ready. Apply migrations, then reload:</p>
+    <pre class="subtle">python manage.py makemigrations games
+python manage.py migrate</pre>
+  {% else %}
+    <p><a class="btn" href="{% url 'game_create' %}">＋ New Simulation</a></p>
+
+    <div class="grid">
+      {% for g in games %}
+        <div class="card">
+          {% if g.thumbnail %}
+            <div class="thumb"
+                 style="background-image:url('{{ g.thumbnail.url }}');
+                        background-size:cover;
+                        background-position:center;"></div>
+          {% else %}
+            <div class="thumb"
+                 style="background-image:url('{% static "twag.png" %}');
+                        background-size:cover;
+                        background-position:center;"></div>
+          {% endif %}
+
+          <div class="inner">
+            <div class="title">
+              <a href="{% url 'game_detail' g.slug %}">{{ g.title }}</a>
+            </div>
+            <div class="desc">
+              {{ g.short_desc|default:"(no description yet)" }}
+            </div>
+
+            <div class="row">
+              {% for t in g.tag_list %}
+                <span class="chip">{{ t }}</span>
+              {% empty %}
+                <span class="chip">No tags</span>
+              {% endfor %}
+            </div>
+
+            <div class="row" style="margin-top:12px; gap:8px">
+              {% if g.external_download_url %}
+                <a class="btn" href="{{ g.external_download_url }}" target="_blank">▶ Play</a>
+              {% else %}
+                <span class="btn" style="opacity:0.5; cursor:default">Play unavailable</span>
+              {% endif %}
+              <span class="spacer"></span>
+              <a class="btn" href="{% url 'game_edit' g.slug %}">✎ Edit</a>
+              <a class="btn btn-danger" href="{% url 'game_delete' g.slug %}">🗑 Delete</a>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="subtle">No games yet. Click “New Game”.</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

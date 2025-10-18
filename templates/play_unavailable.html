@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Simulation unavailable — Unity Physics Hub{% endblock %}
+{% block content %}
+  <h1 class="accent-title">Simulation unavailable</h1>
+  <p class="subtle">This simulation doesn’t have a WebGL build available yet.</p>
+
+  {% if game %}
+    <p class="subtle">Game: <strong>{{ game.title }}</strong></p>
+    <p class="subtle">No web build has been uploaded yet.</p>
+  {% else %}
+  <p class="subtle">Please check back later.</p>
+  {% endif %}
+
+  <p><a class="btn" href="{% url 'home' %}">← Back</a></p>
+{% endblock %}

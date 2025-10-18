@@ -1,0 +1,312 @@
+/* ===========================
+   Unity Physics Hub Theme (home.css)
+   ------------------------------
+   A fresh palette built for physics simulations. The horror‑inspired reds have
+   been replaced with cool blues to evoke energy, motion and experimentation.
+   =========================== */
+
+/* ----- Color system ----- */
+:root {
+  /* Primary surfaces */
+  --bg: #0d1b2a;           /* deep navy */
+  --bg2: #132d4a;          /* secondary background */
+  --card: #1b365d;         /* card background */
+  --text: #e6edf3;         /* near‑white text */
+  --muted: #95a5c6;        /* muted foreground */
+
+  /* Accent colours for physics vibe */
+  --accent: #00b4d8;       /* bright cyan for primary actions */
+  --accent-dark: #0077b6;  /* darkened cyan for gradient depths */
+  --accent-light: #90e0ef; /* soft cyan for hover/glow */
+  --ring: rgba(0, 180, 216, .45); /* semi‑transparent ring for focus */
+}
+
+/* ----- Base / reset ----- */
+*{box-sizing:border-box}
+html,body{height:100%}
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue";
+  color: var(--text);
+  /* Use cool radial gradients to hint at energy ripples */
+  background:
+    radial-gradient(1400px 900px at 50% -10%, rgba(0, 180, 216, .06), transparent 60%),
+    radial-gradient(900px 600px at 90% 10%, rgba(144, 224, 239, .06), transparent 70%),
+    var(--bg);
+  line-height: 1.55;
+}
+
+/* Studio form help text */
+.helptext {
+  color: var(--muted);
+  font-size: 12px;
+}
+.helptext code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(255,255,255,.04);
+  padding: 0 4px; border-radius: 6px;
+}
+
+
+/* ----- Top bar / brand ----- */
+.topbar{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:16px;
+  padding:14px 20px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  background:linear-gradient(180deg, rgba(18,19,26,.85), rgba(18,19,26,.65));
+  backdrop-filter:blur(8px);
+}
+.brand{
+  font-weight:900; letter-spacing:.18em; text-transform:uppercase;
+  font-size:18px; padding:6px 12px; border-radius:12px;
+  color:#fff; text-decoration:none;
+  background: linear-gradient(180deg, rgba(0, 180, 216, .25), rgba(0, 180, 216, .12));
+  border: 1px solid var(--ring);
+  box-shadow: 0 0 0 3px rgba(0, 180, 216, .12) inset, 0 8px 30px rgba(0, 180, 216, .18);
+}
+.spacer{flex:1}
+
+/* ----- Layout ----- */
+.wrap{max-width:1100px;margin:28px auto;padding:0 18px}
+
+/* Headings */
+h1{margin:10px 0 12px;font-size:clamp(24px,3vw,34px);letter-spacing:.4px}
+h2{margin:0 0 6px}
+.subtle{color:var(--muted);font-size:14px}
+
+/* Accent heading styling for detail/home */
+/* Accent heading used on detail pages */
+.accent-title {
+  color: var(--accent);
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-shadow: 0 0 10px rgba(0, 180, 216, .5);
+}
+
+/* ----- Links (kill default blue) ----- */
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover,
+a:focus {
+  color: var(--accent-light);
+  text-shadow: 0 0 8px var(--ring);
+  outline: none;
+}
+/* keep brand white */
+.brand,
+.brand:link,
+.brand:visited {
+  color: #fff;
+}
+
+/* ----- Buttons ----- */
+/* ----- Buttons ----- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 8px 22px rgba(0, 180, 216, .4);
+  transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 14px rgba(0, 180, 216, .35);
+}
+
+/* If a button is inside a form in the header */
+.topbar form{ margin:0 }
+
+/* ----- Cards grid (home & studio) ----- */
+.grid{
+  margin-top:18px;
+  display:grid; gap:16px;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+}
+.card{
+  display:block;
+  color:var(--text);
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px; overflow:hidden; position:relative;
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.card:hover{
+  transform:translateY(-2px);
+  border-color:var(--ring);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 0 3px rgba(0, 180, 216, .12) inset;
+}
+
+/* Thumbnail — default uses TWAG banner if no per-game image */
+.thumb{
+  aspect-ratio:16/9; width:100%; display:block;
+  background:#181a20 center/cover no-repeat;
+  filter:saturate(1.05) contrast(1.05);
+}
+.thumb.fallback{
+  background-image:url('/static/twag.png');  /* STATIC_URL must be /static/ */
+}
+
+/* Card content */
+.inner{ padding:14px }
+.title { font-weight: 800; font-size: 18px; letter-spacing: .4px; color: var(--accent); }
+.card:hover .title { color: var(--accent-light); text-shadow: 0 0 8px var(--ring); }
+.desc{ color:var(--muted); font-size:14px; margin:6px 0 12px; min-height:40px }
+
+.row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+.chip {
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: var(--accent-light);
+  background: rgba(0, 180, 216, .10);
+}
+
+/* Optional edit button container inside card */
+.card-edit{ padding:8px 14px }
+
+/* ----- Detail page media ----- */
+ .game-thumb {
+  max-width:720px; width:100%;
+  border-radius:12px; display:block;
+  box-shadow: 0 0 25px rgba(0, 180, 216, .25);
+}
+.game-thumb.fallback { filter: saturate(0.95) contrast(1.05); }
+
+/* ----- Sections / utility ----- */
+.section{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:6px 0 8px}
+
+/* ----- Footer glow ----- */
+footer {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 32px 0 60px;
+  position: relative;
+}
+footer:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 22px;
+  height: 12px;
+  background: radial-gradient(55% 100% at 50% 100%, rgba(0, 180, 216, .35), transparent 60%);
+  filter: blur(6px);
+}
+
+/* ----- Focus ring for accessibility ----- */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* buttons */
+.btn-danger{
+  background: linear-gradient(180deg, #8b000e, #5e0009);
+  color:#fff;
+  box-shadow: 0 8px 22px rgba(139,0,14,.38);
+}
+.btn-danger:hover{ filter: brightness(1.08); transform: translateY(-2px); }
+
+/* make card title link match the accent palette */
+.card .inner .title a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 800;
+}
+.card:hover .inner .title a {
+  color: var(--accent-light);
+  text-shadow: 0 0 8px var(--ring);
+}
+
+/* ===========================
+   Donate-Now Highlight (Pulse + Border + Ribbon)
+   =========================== */
+
+.btn.donate-coming {
+  position: relative;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--bg), var(--bg)) padding-box,
+    linear-gradient(45deg, var(--accent), var(--accent-light)) border-box;
+  animation:
+    donatePulse 2s ease-in-out infinite,
+    borderFlow 4s linear infinite;
+  box-shadow: 0 0 16px rgba(0, 180, 216, 0.45);
+  transition: transform .12s ease, filter .15s ease;
+}
+
+.btn.donate-coming:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.25);
+}
+
+@keyframes donatePulse {
+  0%, 100% {
+    filter: brightness(1);
+    box-shadow: 0 0 8px rgba(0, 180, 216, 0.3);
+  }
+  50% {
+    filter: brightness(1.25);
+    box-shadow: 0 0 24px rgba(0, 180, 216, 0.7);
+  }
+}
+
+@keyframes borderFlow {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 0 0, 200% 0; }
+}
+
+/* Tiny "COMING SOON" ribbon */
+.btn.donate-coming::after {
+  content: "COMING SOON";
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: var(--accent-dark);
+  color: #fff;
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  letter-spacing: .5px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, .4);
+}
+
+/* nav pills layout */
+.nav-pills {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* inline forms behave like links inside the pill row */
+.nav-pills .nav-form {
+  display: inline;
+  margin: 0;
+}
+
+/* ensure pill buttons keep same look with icons */
+.nav-pills .nav-form .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

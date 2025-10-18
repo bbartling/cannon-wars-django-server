@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ game.title }} — Bens Physics Hub Sims{% endblock %}
+{% block content %}
+
+  <h1 class="accent-title">{{ game.title }}</h1>
+
+  {% if request.user.is_staff %}
+    <p><a class="btn" href="{% url 'game_edit' game.slug %}">✎ Edit</a></p>
+  {% endif %}
+
+  {% if game.thumbnail %}
+    <img src="{{ game.thumbnail.url }}" alt="{{ game.title }} thumbnail" class="game-thumb">
+  {% else %}
+    <img src="{% static 'twag.png' %}" alt="TWAG thumbnail" class="game-thumb fallback">
+  {% endif %}
+
+  {% if game.short_desc %}
+    <p class="subtle" style="margin-top:10px">{{ game.short_desc }}</p>
+  {% endif %}
+
+  <p>
+    {% for t in game.tag_list %}<span class="chip">{{ t }}</span>{% empty %}<span class="chip">Untitled</span>{% endfor %}
+  </p>
+
+  <p class="action-buttons">
+    {% if game.external_download_url %}
+      <a class="btn" href="{{ game.external_download_url }}" target="_blank">▶ Play now</a>
+    {% else %}
+      <span class="btn" style="opacity:0.5; cursor:default">Play unavailable</span>
+    {% endif %}
+    <a class="btn" href="{% url 'home' %}">← Back</a>
+  </p>
+
+
+{% endblock %}

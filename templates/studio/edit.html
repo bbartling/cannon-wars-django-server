@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+  {% if mode == 'create' %}
+    New Game — Studio
+  {% else %}
+    Edit — {{ game.title|default:"(untitled)" }}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<h1>
+  {% if mode == 'create' %}
+    New Simulation
+  {% else %}
+    Edit: {{ game.title|default:"(untitled)" }}
+  {% endif %}
+</h1>
+
+<form method="post" enctype="multipart/form-data"
+      class="inner"
+      style="background:#12131a;border:1px solid rgba(255,255,255,.08);
+             border-radius:12px;padding:16px;max-width:780px">
+  {% csrf_token %}
+
+  <div class="field">
+    <label for="{{ form.title.id_for_label }}">Title</label>
+    {{ form.title }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.slug.id_for_label }}">Slug</label>
+    {{ form.slug }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.short_desc.id_for_label }}">Short description</label>
+    {{ form.short_desc }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.tags.id_for_label }}">Tags</label>
+    {{ form.tags }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.thumbnail.id_for_label }}">Thumbnail</label>
+    {{ form.thumbnail }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.external_download_url.id_for_label }}">Play URL</label>
+    {{ form.external_download_url }}
+    {% if form.external_download_url.help_text %}
+      <p class="help">{{ form.external_download_url.help_text }}</p>
+    {% endif %}
+    {{ form.external_download_url.errors }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.web_zip.id_for_label }}">Upload Unity WebGL .zip</label>
+    {{ form.web_zip }}
+    {% if form.web_zip.help_text %}
+      <p class="help">{{ form.web_zip.help_text }}</p>
+    {% endif %}
+    {{ form.web_zip.errors }}
+    <p class="subtle">
+      The zip must include <code>index.html</code> and Unity’s build folders
+      (e.g., <code>Build/</code>, <code>TemplateData/</code>).
+      Uploading will replace any existing build for this slug.
+    </p>
+  </div>
+
+  <div class="field">
+    <label for="{{ form.published.id_for_label }}">Published</label>
+    {{ form.published }}
+  </div>
+
+  <div class="field">
+    <label for="{{ form.order.id_for_label }}">Order</label>
+    {{ form.order }}
+  </div>
+
+  <div class="actions" style="display:flex;gap:10px">
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a class="btn" href="{% url 'studio_dashboard' %}">Cancel</a>
+  </div>
+</form>
+
+{% endblock %}

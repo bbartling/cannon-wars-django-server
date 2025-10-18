@@ -1,0 +1,26 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Delete: {{ game.title }} — Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{% static 'home.css' %}">
+</head>
+<body>
+<header class="topbar"><div class="brand">Ben's Physics Hub Sims</div></header>
+<main class="wrap">
+  <h1>Delete “{{ game.title }}”?</h1>
+  <p class="subtle">This will remove the simulation and any uploaded assets (thumbnail or WebGL build). This action cannot be undone.</p>
+
+  <form method="post" class="inner" style="background:#12131a;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;max-width:620px">
+    {% csrf_token %}
+    <p style="display:flex;gap:10px">
+      <button class="btn btn-danger" type="submit">Yes, delete</button>
+      <a class="btn" href="{% url 'studio_dashboard' %}">Cancel</a>
+    </p>
+  </form>
+</main>
+<footer>© Twtag — Studio</footer>
+</body>
+</html>

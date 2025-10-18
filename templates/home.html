@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Bens Physics Hub Sims — Simulations{% endblock %}
+{% block content %}
+
+  <h1>Simulations</h1>
+  <p class="subtle">Interactive physics experiments — select a card to play.</p>
+
+  <div class="grid">
+    {% for g in games %}
+      <div class="card">
+        {% if g.thumbnail %}
+          <div class="thumb"
+              style="background-image:url('{{ g.thumbnail.url }}'); background-size:cover; background-position:center;">
+          </div>
+        {% else %}
+          <div class="thumb"
+              style="background-image:url('{% static 'twag.png' %}'); background-size:cover; background-position:center;">
+          </div>
+        {% endif %}
+
+        <div class="inner">
+          <div class="title">
+            <a href="{% url 'game_detail' g.slug %}">{{ g.title }}</a>
+          </div>
+          <div class="desc">
+            {{ g.short_desc|default:"(no description yet)" }}
+          </div>
+
+          <div class="row">
+            {% for t in g.tag_list %}
+              <span class="chip">{{ t }}</span>
+            {% empty %}
+              <span class="chip">No tags</span>
+            {% endfor %}
+          </div>
+
+          <div class="row" style="margin-top:12px; gap:8px">
+            {% if g.external_download_url %}
+              <a class="btn" href="{{ g.external_download_url }}" target="_blank" rel="noopener">▶ Play</a>
+            {% else %}
+              <span class="btn" style="opacity:0.5; cursor:default">Play unavailable</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="subtle">No simulations yet.</p>
+    {% endfor %}
+  </div>
+
+
+{% endblock %}
